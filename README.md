@@ -1,5 +1,4 @@
-# cnbt
-## Computational NanoBio Technology Lab
+# cnbt - MNR
 This repository contains support code for the Micelle Nanoreactor team.
 
 ## BARStool
