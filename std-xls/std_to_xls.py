@@ -99,7 +99,7 @@ def read_txt(txt_file):
 
     return fields
 
-def main(is_cvn, fn_std, fn_bb, fn_bs, fn_ss, fn_wb, n1, n2):
+def main(is_cvn, fn_std, fn_bb, fn_bs, fn_ss, fn_wb, n1, n2, num_frames = 1000):
 
     # print fn_wb
     # return
@@ -209,7 +209,7 @@ def main(is_cvn, fn_std, fn_bb, fn_bs, fn_ss, fn_wb, n1, n2):
             for col in ['Y', 'AI', 'AQ']:
                 current['%s2' % col] = '<%sE/Vp>' % delta
 
-            for i in range(1000):
+            for i in range(num_frames):
                 current['S%d' % (i + 3)] = '=\'BB raw data\'!D%d' % (i + 2)
                 current['T%d' % (i + 3)] = '=\'BB raw data\'!E%d' % (i + 2)
                 current['U%d' % (i + 3)] = '=S%d/T%d' % (i + 3, i + 3)
@@ -283,7 +283,7 @@ def main(is_cvn, fn_std, fn_bb, fn_bs, fn_ss, fn_wb, n1, n2):
             for col in ['Q', 'W', 'AC']:
                 current['%s2' % col] = '<%sE/Vp>' % delta
 
-            for i in range(1000):
+            for i in range(num_frames):
                 current['M%d' % (i + 3)] = '=\'BB raw data\'!D%d' % (i + 2)
                 current['N%d' % (i + 3)] = '=EXP(-M%d/($A$2*$D$2))' % (i + 3)
                 current['O%d' % (i + 3)] = '=O%d' % (i + 2)
