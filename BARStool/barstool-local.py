@@ -6,6 +6,9 @@ import ttk
 from sys import platform
 import shutil
 from os import chdir, mkdir
+# import Config
+#
+# print Config.read('/Users/nick/cnbt/cnbt-repo/cnbt/BARStool/config.txt')
 
 class Application(tk.Frame):
     configdir = '/Users/nick/cnbt/cnbt-repo/cnbt/BARStool/config.txt'
@@ -140,8 +143,10 @@ class Application(tk.Frame):
             frame_prepare,
             self.prep_text_ff,
             'Dreiding',
-            'Dreiding_Dielectric_Const_78',
-            'Universal'
+            'Dreiding_Dielectric_Const_78.4',
+            'Universal',
+            'F3C',
+            'F3C_Dielectric_Const_78.4'
         )
 
         self.prep_ff_label.grid(row = 6, column = 0, padx = 6, pady = 4, sticky = tk.W)
