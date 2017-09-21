@@ -13,6 +13,7 @@ class Config(object):
 #
 # returns: array containing configuration data
 # params:  filename - path for config.txt
+#          user     - user whose default parameters will be read
 
     @staticmethod
     def read(filename, user = getpass.getuser()):
@@ -45,15 +46,64 @@ class Config(object):
 
         return content
 
+# write: parses through a given config file for information
+#
+# returns: array containing configuration data
+# params:  filename - path for config.txt
+#          key      - name of parameter to write
+#          value    - value of parameter
+#          user     - user whose default parameter will be written
+
     @staticmethod
-    def write(filename, key, val, user = getpass.getuser()):
+    def write(filename, key, value, user = getpass.getuser()):
         copy(filename, '.%s_temp' % filename)
         remove(filename)
 
         f_temp = open('.%s_temp' % filename, 'r')
         f_new  = open(filename, 'w')
 
+        find_user = re.compile(r'.*:\n')
+
+        config = dict()
+
+        found = False
+        line = f_temp.readline()
+
+        while line:
+            found = False
+            if find_user.match(line):
+                u = line.split(':')[0]
+                content = dict()
+                point = f_temp.readline()
+                while not found and point:
+                    item = point.split('=')
+                    val = item[1].strip()
+                    try:
+                        val = int(val)
+                    except ValueError:
+                        val = val.strip('\'')
+                    content[item[0].strip()] = val
+                    point = f_temp.readline()
+                    found = point == '\n'
+
+                config[u] = content
+            line = f_temp.readline()
+
+        config[user][key] = value
+
+        for u in config:
+            f_new.write('%s:\n' % u)
+            for k in config[u]:
+                try:
+                    config[u][k] = int(config[u][k])
+                    f_new.write('    %s = %s\n' % (k, config[u][k]))
+                except ValueError:
+                    f_new.write('    %s = \'%s\'\n' % (k, config[u][k]))
+            f_new.write('\n')
 
         remove('.%s_temp' % filename)
 
-# c = Config.write('config-example.txt', 'test', 3)
+# c = Config.write('config-example.txt', 'test', 1)
+
+import site
+print site.getsitepackages()
