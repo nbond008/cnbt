@@ -1,0 +1,19 @@
+nick:
+    prep_temperature = 298
+    prep_text_ff = 'Dreiding'
+    prep_num_frames = 1000
+    prep_num_runs = 1
+    prep_text_m2 = 'pi-1'
+    prep_text_m1 = '4tbs-1'
+    key = 'spaghetti'
+    prep_text_path = '/Users/nick/cnbt/fall 2017/ns/Monomers_Post/Dreiding/1_Baseline'
+
+spaghetti:
+    prep_temperature = 298
+    prep_text_ff = 'Dreiding'
+    prep_num_frames = 1000
+    prep_num_runs = 1
+    prep_text_m2 = 'swab'
+    prep_text_m1 = 'meme'
+    prep_text_path = '/Users/spaghetti/cnbt/fall 2017/ns/Monomers_Post/Dreiding/1_Baseline'
+

@@ -6,9 +6,7 @@ import ttk
 from sys import platform
 import shutil
 from os import chdir, mkdir
-# import Config
-#
-# print Config.read('/Users/nick/cnbt/cnbt-repo/cnbt/BARStool/config.txt')
+from Config import Config
 
 class Application(tk.Frame):
     configdir = '/Users/nick/cnbt/cnbt-repo/cnbt/BARStool/config.txt'
@@ -27,11 +25,6 @@ class Application(tk.Frame):
         self.prep_num_frames  = tk.StringVar()
         self.prep_temperature = tk.StringVar()
 
-        self.prep_text_path.set(self.default())
-        self.prep_text_ff.set('Dreiding')
-        self.prep_num_frames.set(1000)
-        self.prep_temperature.set(298)
-
         self.collect_source_path    = tk.StringVar()
         self.collect_dest_path      = tk.StringVar()
         self.collect_num_runs       = tk.IntVar()
@@ -42,9 +35,7 @@ class Application(tk.Frame):
         self.collect_check_settings = tk.IntVar()
         self.collect_check_BARS     = tk.IntVar()
 
-        self.collect_source_path.set(self.default())
-        self.collect_check_std.set(1)
-        self.collect_check_out.set(1)
+        self.set_defaults()
 
         barstool_style = ttk.Style()
         barstool_style.configure('My.TFrame', background = 'white')
@@ -190,8 +181,8 @@ class Application(tk.Frame):
 
         self.default_button1 = tk.Button(
             frame_prepare,
-            text    = 'Change Default Directory',
-            command = self.change_default
+            text    = 'Set All as Default',
+            command = self.change_default_prep
         )
 
         self.default_button1.grid(row = 9, column = 1, padx = 6, pady = 10)
@@ -371,8 +362,8 @@ class Application(tk.Frame):
 
         self.default_button2 = tk.Button(
             frame_collect,
-            text    = 'Change Default Directory',
-            command = self.change_default
+            text    = 'Set All as Defaults',
+            command = self.change_default_copy
         )
 
         self.default_button2.grid(row = 9, column = 1, padx = 6, pady = 10)
@@ -386,14 +377,14 @@ class Application(tk.Frame):
         self.quit_button2.grid(row = 9, column = 2, padx = 6, pady = 25)
 
     def open_prep_path(self):
-        self.prep_text_path.set(tkFileDialog.askdirectory(initialdir = self.default()))
+        self.prep_text_path.set(tkFileDialog.askdirectory(initialdir = self.prep_text_path.get()))
         self.collect_source_path.set(self.prep_text_path.get())
 
     def open_source_path(self):
-        self.collect_source_path.set(tkFileDialog.askdirectory(initialdir = self.default()))
+        self.collect_source_path.set(tkFileDialog.askdirectory(initialdir = self.collect_source_path.get()))
 
     def open_dest_path(self):
-        self.collect_dest_path.set(tkFileDialog.askdirectory(initialdir = self.default()))
+        self.collect_dest_path.set(tkFileDialog.askdirectory(initialdir = self.collect_dest_path.get()))
 
     def prepare_main(self):
         if (self.prep_text_path is None or self.prep_num_runs is None
@@ -628,47 +619,146 @@ class Application(tk.Frame):
 
         print 'Done!'
 
-    def default(self):
-        ## This block finds the default BARStool directory by current user
-        import getpass
-        user=getpass.getuser()
-        txtFile = open(self.configdir,"r")
-        config = txtFile.read()
-        p = config.split("\n")
+    def set_defaults(self):
+        defaults = Config.read(self.configdir)
 
-        paths = []
-        for each in p:
-            paths.append(each.replace('\r', ''))
+        try:
+            self.prep_text_path.set(defaults['prep_text_path'])
+        except KeyError:
+            self.prep_text_path.set('')
+            pass
 
-        userLoc = paths.index(user)
-        wd = paths[userLoc+1]
-        txtFile.close()
-        return wd;
+        try:
+            self.prep_num_runs.set(defaults['prep_num_runs'])
+        except KeyError:
+            self.prep_num_runs.set(1)
+            pass
 
-    def change_default(self):
+        try:
+            self.prep_text_m1.set(defaults['prep_text_m1'])
+        except KeyError:
+            self.prep_text_m1.set('')
+            pass
+
+        try:
+            self.prep_text_m2.set(defaults['prep_text_m2'])
+        except KeyError:
+            self.prep_text_m2.set('')
+            pass
+
+        try:
+            self.prep_text_ff.set(defaults['prep_text_ff'])
+        except KeyError:
+            self.prep_text_ff.set('')
+            pass
+
+        try:
+            self.prep_num_frames.set(defaults['prep_num_frames'])
+        except KeyError:
+            self.prep_num_frames.set(1000)
+            pass
+
+        try:
+            self.prep_temperature.set(defaults['prep_temperature'])
+        except KeyError:
+            self.prep_temperature.set(298)
+            pass
+
+        try:
+            self.collect_source_path.set(defaults['collect_source_path'])
+        except KeyError:
+            self.collect_source_path.set('')
+            pass
+
+        try:
+            self.collect_dest_path.set(defaults['collect_dest_path'])
+        except KeyError:
+            self.collect_dest_path.set('')
+            pass
+
+        try:
+            self.collect_num_runs.set(defaults['collect_num_runs'])
+        except KeyError:
+            self.collect_num_runs.set(1)
+            pass
+
+        try:
+            self.collect_text_m1.set(defaults['collect_text_m1'])
+        except KeyError:
+            self.collect_text_m1.set('')
+            pass
+
+        try:
+            self.collect_text_m2.set(defaults['collect_text_m2'])
+        except KeyError:
+            self.collect_text_m2.set('')
+            pass
+
+        try:
+            self.collect_check_std.set(defaults['collect_check_std'])
+        except KeyError:
+            self.collect_check_std.set(1)
+            pass
+
+        try:
+            self.collect_check_out.set(defaults['collect_check_out'])
+        except KeyError:
+            self.collect_check_out.set(1)
+            pass
+
+        try:
+            self.collect_check_settings.set(defaults['collect_check_settings'])
+        except KeyError:
+            self.collect_check_settings.set(0)
+            pass
+
+        try:
+            self.collect_check_BARS.set(defaults['collect_check_BARS'])
+        except KeyError:
+            self.collect_check_BARS.set(0)
+            pass
+
+        return
+
+    def change_default_prep(self):
         ## This block will overwrite the default BARStool directory if the user selects
-        ## the "Change default directory..." option
-        import getpass
-        user=getpass.getuser()
-        txtFile = open(self.configdir,"r")
-        config = txtFile.read()
-        p = config.split("\n")
+        ## the "Set All as Defaults" option
 
-        paths = []
-        for each in p:
-            paths.append(each.replace('\r', ''))
+        defaults = dict()
 
-        userLoc = paths.index(user)
-        txtFile.close()
-        #paths[userLoc+1] = raw_input("New path: ") # This will, of course, need to change, since it's gonna be a folder selection...
-        paths[userLoc+1] = tkFileDialog.askdirectory()
-        txtFile = open(self.configdir,"w")
-        for line in paths:
-            txtFile.write(line+"\n")
-        txtFile.close()
-        self.prep_text_path.set(self.default())
-        self.collect_source_path.set(self.default())
-        return;
+        defaults['prep_text_path']         = self.prep_text_path.get()
+        defaults['prep_num_runs']          = self.prep_num_runs.get()
+        defaults['prep_text_m1']           = self.prep_text_m1.get()
+        defaults['prep_text_m2']           = self.prep_text_m2.get()
+        defaults['prep_text_ff']           = self.prep_text_ff.get()
+        defaults['prep_num_frames']        = self.prep_num_frames.get()
+        defaults['prep_temperature']       = self.prep_temperature.get()
+
+        Config.write_all(self.configdir, defaults)
+
+        print 'Prepare tab defaults saved.'
+        return
+
+    def change_default_copy(self):
+        ## This block will overwrite the default BARStool directory if the user selects
+        ## the "Set All as Defaults" option
+
+        defaults = dict()
+
+        defaults['collect_source_path']    = self.collect_source_path.get()
+        defaults['collect_dest_path']      = self.collect_dest_path.get()
+        defaults['collect_num_runs']       = self.collect_num_runs.get()
+        defaults['collect_text_m1']        = self.collect_text_m1.get()
+        defaults['collect_text_m2']        = self.collect_text_m2.get()
+        defaults['collect_check_std']      = self.collect_check_std.get()
+        defaults['collect_check_out']      = self.collect_check_out.get()
+        defaults['collect_check_settings'] = self.collect_check_settings.get()
+        defaults['collect_check_BARS']     = self.collect_check_BARS.get()
+
+        Config.write_all(self.configdir, defaults)
+
+        print 'Copy tab defaults saved.'
+        return
 
 top =\
 '''###############################################################################################################
