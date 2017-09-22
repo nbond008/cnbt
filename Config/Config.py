@@ -46,6 +46,15 @@ class Config(object):
 
         return content
 
+    @staticmethod
+    def init(filename, user = getpass.getuser()):
+        f = open(filename, 'w')
+        f.close()
+
+        f = open(filename, 'a')
+        f.write('%s:\n' % user)
+        f.close()
+
 # write: parses through a given config file for information
 #
 # returns: array containing configuration data

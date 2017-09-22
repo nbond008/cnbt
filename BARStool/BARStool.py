@@ -659,7 +659,11 @@ class Application(tk.Frame):
     #     return;
 
     def set_defaults(self):
-        defaults = Config.read(self.configdir)
+        try:
+            defaults = Config.read(self.configdir)
+        except IOError:
+            Config.init(self.configdir)
+            defaults = dict([])
 
         try:
             self.prep_text_path.set(defaults['prep_text_path'])
@@ -773,7 +777,11 @@ class Application(tk.Frame):
         defaults['prep_num_frames']        = self.prep_num_frames.get()
         defaults['prep_temperature']       = self.prep_temperature.get()
 
-        Config.write_all(self.configdir, defaults)
+        try:
+            Config.write_all(self.configdir, defaults)
+        except IOError:
+            Config.init(self.configdir)
+            Config.write_all(self.configdir, defaults)
 
         print 'Prepare tab defaults saved.'
         return
@@ -794,7 +802,11 @@ class Application(tk.Frame):
         defaults['collect_check_settings'] = self.collect_check_settings.get()
         defaults['collect_check_BARS']     = self.collect_check_BARS.get()
 
-        Config.write_all(self.configdir, defaults)
+        try:
+            Config.write_all(self.configdir, defaults)
+        except IOError:
+            Config.init(self.configdir)
+            Config.write_all(self.configdir, defaults)
 
         print 'Copy tab defaults saved.'
         return

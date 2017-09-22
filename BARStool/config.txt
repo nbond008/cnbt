@@ -2,7 +2,7 @@ nick:
     collect_dest_path = '/Users/nick/cnbt/fall 2017/ns/Monomers_Post/Dreiding/1_Baseline'
     prep_temperature = 298
     collect_source_path = '/Users/nick/cnbt/fall 2017/ns/Monomers_Post/Dreiding/1_Baseline'
-    prep_text_ff = 'Dreiding'
+    prep_text_ff = 'Dreiding_Dielectric_Const_78.4'
     prep_num_frames = 1000
     prep_num_runs = 5
     collect_check_settings = 1
@@ -15,3 +15,4 @@ nick:
     prep_text_path = '/Users/nick/cnbt/fall 2017/ns/Monomers_Post/Dreiding/1_Baseline'
     collect_num_runs = 5
     collect_text_m2 = 'pi-1'
+
