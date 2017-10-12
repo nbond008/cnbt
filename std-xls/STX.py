@@ -305,7 +305,8 @@ class Application(tk.Frame):
                         '%s (%d)%s%s %s.txt' % (base, i, pathchar, self.text_m2.get(), self.text_m2.get()),
                         wb_paths[i - 1],
                         int(self.text_dpn1.get()),
-                        int(self.text_dpn2.get())
+                        int(self.text_dpn2.get()),
+                        int(self.num_frames.get())
                     )
 
                     if i < self.num_runs.get():
