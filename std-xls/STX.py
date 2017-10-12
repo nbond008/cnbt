@@ -5,34 +5,37 @@ import tkMessageBox
 import std_to_xls
 import xls_compile
 import getpass
+from Config import Config
 
-user=getpass.getuser()
-print("Hi, "+user+"!")
-if user=='cnbt02':
-    user=user+'_new'
-localdir = '/Users/%s/cnbt/cnbt-repo/cnbt/std-xls/' % user
-configdir = '%sconfig.txt' % localdir
+# user=getpass.getuser()
+# print("Hi, "+user+"!")
+# if user=='cnbt02':
+#     user=user+'_new'
+# localdir = '/Users/%s/cnbt/cnbt-repo/cnbt/std-xls/' % user
+# configdir = '%sconfig.txt' % localdir
+#
+# txtFile = open(configdir,"r")
+# config = txtFile.read()
+# p = config.split("\n")
+#
+# paths = []
+# for each in p:
+#     paths.append(each.replace('\r', ''))
+#
+# userLoc = paths.index(user)
+# txtFile.close()
 
-txtFile = open(configdir,"r")
-config = txtFile.read()
-p = config.split("\n")
-
-paths = []
-for each in p:
-    paths.append(each.replace('\r', ''))
-
-userLoc = paths.index(user)
-txtFile.close()
-
-print("Your current default directory is:\n%s\n") % paths[userLoc+1]
+# print("Your current default directory is:\n%s\n") % paths[userLoc+1]
 
 class Application(tk.Frame):
+    configdir = '/Users/nick/cnbt/cnbt-repo/cnbt/std-xls/config.txt'
+
     def __init__(self, master = None):
         tk.Frame.__init__(self, master)
         self.grid()
         self.create_widgets()
-        self.localdir = '/Users/%s/cnbt/cnbt-repo/cnbt/std-xls/' % user
-        self.configdir = '%sconfig.txt' % self.localdir
+        #self.localdir = '/Users/%s/cnbt/cnbt-repo/cnbt/std-xls/' % 'spaghetti'
+        #self.configdir = '%sconfig.txt' % self.localdir
 
     def create_widgets(self):
         self.text_path  = tk.StringVar()
@@ -40,21 +43,20 @@ class Application(tk.Frame):
         self.text_m1    = tk.StringVar()
         self.text_m2    = tk.StringVar()
         self.num_frames = tk.StringVar()
-
         self.check_cvn = tk.IntVar()
-
-        self.check_dpm = tk.IntVar()
-        self.text_dpm1 = tk.StringVar()
-        self.text_dpm2 = tk.StringVar()
-
+        self.check_dpn = tk.IntVar()
+        self.text_dpn1 = tk.StringVar()
+        self.text_dpn2 = tk.StringVar()
         self.text_mds  = tk.StringVar()
         self.check_mds = tk.IntVar()
 
-        self.text_path.set(paths[userLoc + 1])
-        self.num_frames.set(1000)
-        self.text_dpm1.set('1')
-        self.text_dpm2.set('1')
-        self.check_mds.set(1)
+        self.set_defaults()
+
+        # self.text_path.set(paths[userLoc + 1])
+        # self.num_frames.set(1000)
+        # self.text_dpn1.set('1')
+        # self.text_dpn2.set('1')
+        # self.check_mds.set(1)
 
         self.path_label = tk.Label(
             self,
@@ -64,7 +66,7 @@ class Application(tk.Frame):
         self.path_path = tk.Button(
             self,
             text = 'Open',
-            command = lambda: self.text_path.set(tkFileDialog.askdirectory(initialdir = paths[userLoc + 1]))
+            command = lambda: self.text_path.set(tkFileDialog.askdirectory())# initialdir = paths[userLoc + 1])
 
         )
 
@@ -151,49 +153,56 @@ class Application(tk.Frame):
         self.cvn_label.grid(row = 5, column = 0, padx = 6, pady = 4, sticky = tk.W)
         self.cvn_checkbox.grid(row = 5, column = 1, padx = 0, pady = 4, sticky = tk.W)
 
-        self.dpm_label = tk.Label(
+        self.dpn_label = tk.Label(
             self,
-            text = 'Using DPM?'
+            text = 'Using DPN?'
         )
 
-        self.dpm_checkbox = tk.Checkbutton(
+        self.dpn_checkbox = tk.Checkbutton(
             self,
-            variable = self.check_dpm,
-            command  = self.set_dpm,
+            variable = self.check_dpn,
+            command  = self.set_dpn,
             state = tk.DISABLED
         )
 
-        self.dpm_label.grid(row = 6, column = 0, padx = 6, pady = 4, sticky = tk.W)
-        self.dpm_checkbox.grid(row = 6, column = 1, padx = 0, pady = 4, sticky = tk.W)
+        if self.check_cvn.get():
+            self.dpn_checkbox.config(state = tk.NORMAL)
 
-        self.text_dpm1_label = tk.Label(
+        self.dpn_label.grid(row = 6, column = 0, padx = 6, pady = 4, sticky = tk.W)
+        self.dpn_checkbox.grid(row = 6, column = 1, padx = 0, pady = 4, sticky = tk.W)
+
+        self.text_dpn1_label = tk.Label(
             self,
             text = 'n1'
         )
 
-        self.text_dpm1_box = tk.Entry(
+        self.text_dpn1_box = tk.Entry(
             self,
-            textvariable = self.text_dpm1,
+            textvariable = self.text_dpn1,
             width = 2,
             state = tk.DISABLED
         )
 
-        self.text_dpm2_label = tk.Label(
+        self.text_dpn2_label = tk.Label(
             self,
             text = 'n2'
         )
 
-        self.text_dpm2_box = tk.Entry(
+        self.text_dpn2_box = tk.Entry(
             self,
-            textvariable = self.text_dpm2,
+            textvariable = self.text_dpn2,
             width = 2,
             state = tk.DISABLED
         )
 
-        self.text_dpm1_label.grid(row = 7, column = 0, padx = 12, pady = 4, sticky = tk.E)
-        self.text_dpm1_box.grid(row = 7, column = 1, padx = 0, pady = 4, sticky = tk.W)
-        self.text_dpm2_label.grid(row = 8, column = 0, padx = 12, pady = 4, sticky = tk.E)
-        self.text_dpm2_box.grid(row = 8, column = 1, padx = 0, pady = 4, sticky = tk.W)
+        if self.check_dpn.get():
+            self.text_dpn1_box.config(state = tk.NORMAL)
+            self.text_dpn2_box.config(state = tk.NORMAL)
+
+        self.text_dpn1_label.grid(row = 7, column = 0, padx = 12, pady = 4, sticky = tk.E)
+        self.text_dpn1_box.grid(row = 7, column = 1, padx = 0, pady = 4, sticky = tk.W)
+        self.text_dpn2_label.grid(row = 8, column = 0, padx = 12, pady = 4, sticky = tk.E)
+        self.text_dpn2_box.grid(row = 8, column = 1, padx = 0, pady = 4, sticky = tk.W)
 
         self.mds_label = tk.Label(
             self,
@@ -216,7 +225,7 @@ class Application(tk.Frame):
 
         self.default_button = tk.Button(
             self,
-            text    = 'Change Default Directory',
+            text    = 'Set All as Defaults',
             command = self.change_default
         )
 
@@ -232,22 +241,22 @@ class Application(tk.Frame):
 
     def set_cvn(self):
         if self.check_cvn.get():
-            self.dpm_checkbox.config(state = tk.NORMAL)
-            if self.check_dpm.get():
-                self.text_dpm1_box.config(state = tk.NORMAL)
-                self.text_dpm2_box.config(state = tk.NORMAL)
+            self.dpn_checkbox.config(state = tk.NORMAL)
+            if self.check_dpn.get():
+                self.text_dpn1_box.config(state = tk.NORMAL)
+                self.text_dpn2_box.config(state = tk.NORMAL)
         else:
-            self.dpm_checkbox.config(state = tk.DISABLED)
-            self.text_dpm1_box.config(state = tk.DISABLED)
-            self.text_dpm2_box.config(state = tk.DISABLED)
+            self.dpn_checkbox.config(state = tk.DISABLED)
+            self.text_dpn1_box.config(state = tk.DISABLED)
+            self.text_dpn2_box.config(state = tk.DISABLED)
 
-    def set_dpm(self):
-        if self.check_cvn.get() and self.check_dpm.get():
-            self.text_dpm1_box.config(state = tk.NORMAL)
-            self.text_dpm2_box.config(state = tk.NORMAL)
+    def set_dpn(self):
+        if self.check_cvn.get() and self.check_dpn.get():
+            self.text_dpn1_box.config(state = tk.NORMAL)
+            self.text_dpn2_box.config(state = tk.NORMAL)
         else:
-            self.text_dpm1_box.config(state = tk.DISABLED)
-            self.text_dpm2_box.config(state = tk.DISABLED)
+            self.text_dpn1_box.config(state = tk.DISABLED)
+            self.text_dpn2_box.config(state = tk.DISABLED)
 
     def default(self):
         return ''
@@ -275,8 +284,8 @@ class Application(tk.Frame):
             '%s%s%s %s.txt' % (base, pathchar, self.text_m1.get(), self.text_m2.get()),
             '%s%s%s %s.txt' % (base, pathchar, self.text_m2.get(), self.text_m2.get()),
             wb_paths[0],
-            int(self.text_dpm1.get()),
-            int(self.text_dpm2.get()),
+            int(self.text_dpn1.get()),
+            int(self.text_dpn2.get()),
             int(self.num_frames.get())
         )
 
@@ -295,8 +304,8 @@ class Application(tk.Frame):
                         '%s (%d)%s%s %s.txt' % (base, i, pathchar, self.text_m1.get(), self.text_m2.get()),
                         '%s (%d)%s%s %s.txt' % (base, i, pathchar, self.text_m2.get(), self.text_m2.get()),
                         wb_paths[i - 1],
-                        int(self.text_dpm1.get()),
-                        int(self.text_dpm2.get())
+                        int(self.text_dpn1.get()),
+                        int(self.text_dpn2.get())
                     )
 
                     if i < self.num_runs.get():
@@ -322,19 +331,108 @@ class Application(tk.Frame):
 
         print('\nDone!\n')
 
+    def set_defaults(self):
+        try:
+            defaults = Config.read(self.configdir)
+        except IOError:
+            Config.init(self.configdir)
+            defaults = dict([])
+
+        try:
+            self.text_path.set(defaults['text_path'])
+        except KeyError:
+            self.text_path.set('')
+            pass
+
+        try:
+            self.num_runs.set(defaults['num_runs'])
+        except KeyError:
+            self.num_runs.set('')
+            pass
+
+        try:
+            self.check_cvn.set(defaults['check_cvn'])
+        except KeyError:
+            self.check_cvn.set(0)
+            pass
+
+        try:
+            self.check_dpn.set(defaults['check_dpn'])
+        except KeyError:
+            self.check_dpn.set(0)
+            pass
+
+        try:
+            self.text_m1.set(defaults['text_m1'])
+        except KeyError:
+            self.text_m1.set('')
+            pass
+
+        try:
+            self.text_m2.set(defaults['text_m2'])
+        except KeyError:
+            self.text_m2.set('')
+            pass
+
+        try:
+            self.num_frames.set(defaults['num_frames'])
+        except KeyError:
+            self.num_frames.set('')
+            pass
+
+        try:
+            self.text_dpn1.set(defaults['text_dpn1'])
+        except KeyError:
+            self.text_dpn1.set('1')
+            pass
+
+        try:
+            self.text_dpn2.set(defaults['text_dpn2'])
+        except KeyError:
+            self.text_dpn2.set('1')
+            pass
+
+        try:
+            self.text_mds.set(defaults['text_mds'])
+        except KeyError:
+            self.text_mds.set('')
+            pass
+
+        try:
+            self.check_mds.set(defaults['check_mds'])
+        except KeyError:
+            self.check_mds.set(1)
+            pass
+
+        #self.set_cvn()
+        #self.set_dpn()
+
+        return
+
     def change_default(self):
-        ## This block will overwrite the default BARStool directory if the user selects
-        ## the "Change default directory..." option
-        newDefault = tkFileDialog.askdirectory(initialdir = paths[userLoc+1])
-        if not newDefault == '':
-            paths[userLoc+1] = newDefault
-            txtFile = open(self.configdir,"w")
-            for line in paths:
-                txtFile.write(line+"\n")
-            txtFile.close()
-            self.text_path.set(paths[userLoc+1])
-            print("Your new default directory is:\n"+paths[userLoc+1]+"\n")
-        return;
+        defaults = dict()
+
+        defaults['text_path']  = self.text_path.get()
+        defaults['num_runs']   = self.num_runs.get()
+        defaults['text_m1']    = self.text_m1.get()
+        defaults['text_m2']    = self.text_m2.get()
+        defaults['num_frames'] = self.num_frames.get()
+        defaults['check_cvn']  = self.check_cvn.get()
+        defaults['check_dpn']  = self.check_dpn.get()
+        defaults['text_dpn1']  = self.text_dpn1.get()
+        defaults['text_dpn2']  = self.text_dpn2.get()
+        defaults['text_mds']   = self.text_mds.get()
+        defaults['check_mds']  = self.check_mds.get()
+
+        try:
+            Config.write_all(self.configdir, defaults)
+        except IOError:
+            Config.init(self.configdir)
+            Config.write_all(self.configdir, defaults)
+
+        print 'Defaults saved.'
+
+        return
 
 app = Application()
 app.master.title('STD to XLSX')
