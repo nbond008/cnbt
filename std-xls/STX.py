@@ -5,6 +5,7 @@ import tkMessageBox
 import std_to_xls
 import xls_compile
 import getpass
+from os import path
 from Config import Config
 
 # user=getpass.getuser()
@@ -28,7 +29,7 @@ from Config import Config
 # print("Your current default directory is:\n%s\n") % paths[userLoc+1]
 
 class Application(tk.Frame):
-    configdir = '/Users/nick/cnbt/cnbt-repo/cnbt/std-xls/config.txt'
+    configdir = '%s/config.txt' % path.dirname(path.realpath(__file__))
 
     def __init__(self, master = None):
         tk.Frame.__init__(self, master)
