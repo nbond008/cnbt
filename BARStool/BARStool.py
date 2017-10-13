@@ -5,7 +5,7 @@ import tkMessageBox
 import ttk
 import sys
 import shutil
-from os import chdir,mkdir
+from os import chdir, mkdir, path
 import getpass
 user=getpass.getuser()
 print("Hi, "+user+"!")
@@ -28,12 +28,14 @@ txtFile.close()
 print("Your current default directory is:\n%s\n") % paths[userLoc+1]
 
 class Application(tk.Frame):
+    configdir = '%s/config.txt' % path.dirname(path.realpath(__file__))
+    
     def __init__(self, master = None):
         tk.Frame.__init__(self, master)
         self.grid()
         self.create_widgets()
-        self.localdir = 'C:/Users/%s/Documents/BARStool/' % user
-        self.configdir = '%sconfig.txt' % localdir
+        # self.localdir = 'C:/Users/%s/Documents/BARStool/' % user
+        # self.configdir = '%sconfig.txt' % localdir
 
     def create_widgets(self):
         self.prep_text_path   = tk.StringVar()

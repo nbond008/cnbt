@@ -5,11 +5,11 @@ import tkMessageBox
 import ttk
 from sys import platform
 import shutil
-from os import chdir, mkdir
+from os import chdir, mkdir, path
 from Config import Config
 
 class Application(tk.Frame):
-    configdir = '/Users/nick/cnbt/cnbt-repo/cnbt/BARStool/config.txt'
+    configdir = '%s/config.txt' % path.dirname(path.realpath(__file__))
 
     def __init__(self, master = None):
         tk.Frame.__init__(self, master)
