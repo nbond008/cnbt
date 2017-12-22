@@ -2,31 +2,10 @@ import Tkinter as tk
 import tkFont
 import tkFileDialog
 import tkMessageBox
-import std_to_xls
-import xls_compile
+import std_assemble
 import getpass
 from os import path
 from Config import Config
-
-# user=getpass.getuser()
-# print("Hi, "+user+"!")
-# if user=='cnbt02':
-#     user=user+'_new'
-# localdir = '/Users/%s/cnbt/cnbt-repo/cnbt/std-xls/' % user
-# configdir = '%sconfig.txt' % localdir
-#
-# txtFile = open(configdir,"r")
-# config = txtFile.read()
-# p = config.split("\n")
-#
-# paths = []
-# for each in p:
-#     paths.append(each.replace('\r', ''))
-#
-# userLoc = paths.index(user)
-# txtFile.close()
-
-# print("Your current default directory is:\n%s\n") % paths[userLoc+1]
 
 class Application(tk.Frame):
     configdir = '%s/config.txt' % path.dirname(path.realpath(__file__))
@@ -50,6 +29,8 @@ class Application(tk.Frame):
         self.text_dpn2 = tk.StringVar()
         self.text_mds  = tk.StringVar()
         self.check_mds = tk.IntVar()
+        self.check_stc = tk.IntVar()
+        self.check_sed = tk.IntVar()
 
         self.set_defaults()
 
@@ -212,11 +193,44 @@ class Application(tk.Frame):
 
         self.mds_checkbox = tk.Checkbutton(
             self,
-            variable = self.check_mds
+            variable = self.check_mds,
+            command = self.set_mds_dependent
         )
 
         self.mds_label.grid(row = 9, column = 0, padx = 6, pady = 4, sticky = tk.W)
         self.mds_checkbox.grid(row = 9, column = 1, padx = 0, pady = 4, sticky = tk.W)
+
+        self.stc_label = tk.Label(
+            self,
+            text = 'Static'
+        )
+
+        self.stc_checkbox = tk.Checkbutton(
+            self,
+            variable = self.check_stc
+        )
+
+        self.stc_label2 = tk.Label(
+            self,
+            text = 'If left unchecked, creates a dynamic sheet with links.'
+        )
+
+        self.stc_label.grid(row = 10, column = 0, padx = 6, pady = 4, sticky = tk.W)
+        self.stc_checkbox.grid(row = 10, column = 1, padx = 0, pady = 4, sticky = tk.W)
+        self.stc_label2.grid(row = 10, column = 0, padx = 6, pady = 4, sticky = tk.W)
+
+        self.sed_label = tk.Label(
+            self,
+            text = 'Create sorted energy diagrams?'
+        )
+
+        self.sed_checkbox = tk.Checkbutton(
+            self,
+            variable = self.check_sed
+        )
+
+        self.sed_label.grid(row = 11, column = 0, padx = 6, pady = 4, sticky = tk.W)
+        self.sed_checkbox.grid(row = 11, column = 1, padx = 0, pady = 4, sticky = tk.W)
 
         self.run_button = tk.Button(
             self,
@@ -236,9 +250,9 @@ class Application(tk.Frame):
             command = self.quit
         )
 
-        self.run_button.grid(row = 10, column = 0, padx = 6, pady = 25)
-        self.default_button.grid(row = 10, column = 1, padx = 0, pady = 8)
-        self.quit_button.grid(row = 10, column = 2, padx = 6, pady = 25)
+        self.run_button.grid(row = 12, column = 0, padx = 6, pady = 25)
+        self.default_button.grid(row = 12, column = 1, padx = 0, pady = 8)
+        self.quit_button.grid(row = 12, column = 2, padx = 6, pady = 25)
 
     def set_cvn(self):
         if self.check_cvn.get():
@@ -258,6 +272,14 @@ class Application(tk.Frame):
         else:
             self.text_dpn1_box.config(state = tk.DISABLED)
             self.text_dpn2_box.config(state = tk.DISABLED)
+
+    def set_mds_dependent(self):
+        if self.check_mds.get():
+            self.stc_checkbox.config(state = tk.NORMAL)
+            self.sed_checkbox.config(state = tk.NORMAL)
+        else:
+            self.stc_checkbox.config(state = tk.DISABLED)
+            self.sed_checkbox.config(state = tk.DISABLED)
 
     def default(self):
         return ''
