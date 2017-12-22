@@ -2,9 +2,9 @@ import Tkinter as tk
 import tkFont
 import tkFileDialog
 import tkMessageBox
-import std_assemble
 import getpass
 from os import path
+import stx_assemble
 from Config import Config
 
 class Application(tk.Frame):
@@ -14,8 +14,6 @@ class Application(tk.Frame):
         tk.Frame.__init__(self, master)
         self.grid()
         self.create_widgets()
-        #self.localdir = '/Users/%s/cnbt/cnbt-repo/cnbt/std-xls/' % 'spaghetti'
-        #self.configdir = '%sconfig.txt' % self.localdir
 
     def create_widgets(self):
         self.text_path  = tk.StringVar()
@@ -48,7 +46,7 @@ class Application(tk.Frame):
         self.path_path = tk.Button(
             self,
             text = 'Open',
-            command = lambda: self.text_path.set(tkFileDialog.askdirectory())# initialdir = paths[userLoc + 1])
+            command = lambda: self.text_path.set(tkFileDialog.askdirectory())
 
         )
 
@@ -70,11 +68,12 @@ class Application(tk.Frame):
 
         self.num_path = tk.Scale(
             self,
-            from_        = 1,
-            to           = 10,
-            orient       = tk.HORIZONTAL,
-            length       = 200,
-            variable     = self.num_runs
+            from_    = 1,
+            to       = 10,
+            orient   = tk.HORIZONTAL,
+            length   = 200,
+            variable = self.num_runs,
+            command  = self.set_num_runs_dependent
         )
 
         self.num_label.grid(row = 1, column = 0, padx = 6, pady = 4, sticky = tk.W)
@@ -194,7 +193,8 @@ class Application(tk.Frame):
         self.mds_checkbox = tk.Checkbutton(
             self,
             variable = self.check_mds,
-            command = self.set_mds_dependent
+            command = self.set_mds_dependent,
+            state = tk.DISABLED if (self.num_runs.get() < 2) else tk.NORMAL
         )
 
         self.mds_label.grid(row = 9, column = 0, padx = 6, pady = 4, sticky = tk.W)
@@ -207,7 +207,8 @@ class Application(tk.Frame):
 
         self.stc_checkbox = tk.Checkbutton(
             self,
-            variable = self.check_stc
+            variable = self.check_stc,
+            state = tk.DISABLED if (not self.check_mds.get()) else tk.NORMAL
         )
 
         self.stc_label2 = tk.Label(
@@ -217,7 +218,7 @@ class Application(tk.Frame):
 
         self.stc_label.grid(row = 10, column = 0, padx = 6, pady = 4, sticky = tk.W)
         self.stc_checkbox.grid(row = 10, column = 1, padx = 0, pady = 4, sticky = tk.W)
-        self.stc_label2.grid(row = 10, column = 0, padx = 6, pady = 4, sticky = tk.W)
+        self.stc_label2.grid(row = 10, column = 2, padx = 6, pady = 4, sticky = tk.W)
 
         self.sed_label = tk.Label(
             self,
@@ -226,7 +227,8 @@ class Application(tk.Frame):
 
         self.sed_checkbox = tk.Checkbutton(
             self,
-            variable = self.check_sed
+            variable = self.check_sed,
+            state = tk.DISABLED if (not self.check_mds.get()) else tk.NORMAL
         )
 
         self.sed_label.grid(row = 11, column = 0, padx = 6, pady = 4, sticky = tk.W)
@@ -273,6 +275,12 @@ class Application(tk.Frame):
             self.text_dpn1_box.config(state = tk.DISABLED)
             self.text_dpn2_box.config(state = tk.DISABLED)
 
+    def set_num_runs_dependent(self, n):
+        if int(n) > 1:
+            self.mds_checkbox.config(state = tk.NORMAL)
+        else:
+            self.mds_checkbox.config(state = tk.DISABLED)
+
     def set_mds_dependent(self):
         if self.check_mds.get():
             self.stc_checkbox.config(state = tk.NORMAL)
@@ -300,7 +308,7 @@ class Application(tk.Frame):
         if self.num_runs.get() > 1:
             print('\n------ Starting run 1 ------\n')
 
-        std_to_xls.main(
+        entry = stx_assemble.assemble(
             self.check_cvn.get(),
             '%s%s%s.std'    % (base, pathchar, self.text_m1.get()),
             '%s%s%s %s.txt' % (base, pathchar, self.text_m1.get(), self.text_m1.get()),
@@ -309,10 +317,14 @@ class Application(tk.Frame):
             wb_paths[0],
             int(self.text_dpn1.get()),
             int(self.text_dpn2.get()),
-            int(self.num_frames.get())
+            int(self.num_frames.get()),
+            self.check_stc.get(),
+            self.check_sed.get()
         )
 
         if self.num_runs.get() > 1:
+            entries = [entry]
+
             print('\n\tCurrent progress: %d%%' % (100 / self.num_runs.get()))
 
             for i in range(2,self.num_runs.get() + 1):
@@ -320,7 +332,7 @@ class Application(tk.Frame):
                 try:
                     wb_paths.append('%s (%d)%s%s %s (%d).xlsx' % (base, i, pathchar, self.text_m1.get(), self.text_m2.get(), i))
 
-                    std_to_xls.main(
+                    entries.append(stx_assemble.assemble(
                         self.check_cvn.get(),
                         '%s (%d)%s%s.std'    % (base, i, pathchar, self.text_m1.get()),
                         '%s (%d)%s%s %s.txt' % (base, i, pathchar, self.text_m1.get(), self.text_m1.get()),
@@ -329,8 +341,10 @@ class Application(tk.Frame):
                         wb_paths[i - 1],
                         int(self.text_dpn1.get()),
                         int(self.text_dpn2.get()),
-                        int(self.num_frames.get())
-                    )
+                        int(self.num_frames.get()),
+                        self.check_stc.get(),
+                        self.check_sed.get()
+                    ))
 
                     if i < self.num_runs.get():
                         print('\n\tCurrent progress: %d%%' % (i * (100 / self.num_runs.get())))
@@ -346,12 +360,25 @@ class Application(tk.Frame):
             if self.check_mds.get():
                 print('\n------ Master Data Sheet ------\n')
 
-                xls_compile.main(
-                    self.check_cvn.get(),
-                    wb_paths,
-                    '%s%s%s %s.xlsx' % (base, pathchar, self.text_m1.get(), self.text_m2.get()),
-                    pathchar
-                )
+                if self.check_stc.get():
+                    stx_assemble.compile_static(
+                        self.check_cvn.get(),
+                        entries,
+                        '%s%s%s %s.xlsx' % (base, pathchar, self.text_m1.get(), self.text_m2.get()),
+                        pathchar,
+                        int(self.num_frames.get()),
+                        self.check_sed.get()
+                    )
+                else:
+                    stx_assemble.compile_dynamic(
+                        self.check_cvn.get(),
+                        wb_paths,
+                        entries,
+                        '%s%s%s %s.xlsx' % (base, pathchar, self.text_m1.get(), self.text_m2.get()),
+                        pathchar,
+                        int(self.num_frames.get()),
+                        self.check_sed.get()
+                    )
 
         print('\nDone!\n')
 
@@ -428,8 +455,17 @@ class Application(tk.Frame):
             self.check_mds.set(1)
             pass
 
-        #self.set_cvn()
-        #self.set_dpn()
+        try:
+            self.check_stc.set(defaults['check_stc'])
+        except KeyError:
+            self.check_stc.set(1)
+            pass
+
+        try:
+            self.check_sed.set(defaults['check_sed'])
+        except KeyError:
+            self.check_sed.set(1)
+            pass
 
         return
 
@@ -447,6 +483,8 @@ class Application(tk.Frame):
         defaults['text_dpn2']  = self.text_dpn2.get()
         defaults['text_mds']   = self.text_mds.get()
         defaults['check_mds']  = self.check_mds.get()
+        defaults['check_stc']  = self.check_stc.get()
+        defaults['check_sed']  = self.check_sed.get()
 
         try:
             Config.write_all(self.configdir, defaults)
