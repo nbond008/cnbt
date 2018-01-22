@@ -386,6 +386,12 @@ def assemble(is_cvn, fn_std, fn_bb, fn_bs, fn_ss, fn_wb, n1, n2, num_frames = 10
 
                 # sums and other loops
                 for row in range(3, num_frames + 3):
+                    cureval['M%d' % row] = raw_array[0]['D%d' % (row - 1)]/raw_array[0]['E%d' % (row - 1)]
+
+                    cureval['S%d' % row] = raw_array[1]['D%d' % (row - 1)]/raw_array[0]['E%d' % (row - 1)]
+
+                    cureval['Y%d' % row] = raw_array[2]['D%d' % (row - 1)]/raw_array[0]['E%d' % (row - 1)]
+
                     cureval['N%d' % row] = math.exp(-raw_array[0]['D%d' % (row - 1)] / (temp * 0.00198588))
 
                     cureval['T%d' % row] = math.exp(-raw_array[1]['D%d' % (row - 1)] / (temp * 0.00198588))
@@ -747,7 +753,7 @@ def compile_static(is_cvn, entries, fn_mds, pathchar, num_frames, sed = False):
         current['I1'] = 'Zsb'
         current['J1'] = 'Zss'
 
-        for i in range(0, len(wb_paths)):
+        for i in range(0, len(entries)):
             entry = entries[i][0]
 
             current['A%d' % (i + 2)] = '%d' % (i + 1)
