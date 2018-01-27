@@ -386,11 +386,11 @@ def assemble(is_cvn, fn_std, fn_bb, fn_bs, fn_ss, fn_wb, n1, n2, num_frames = 10
 
                 # sums and other loops
                 for row in range(3, num_frames + 3):
-                    cureval['M%d' % row] = raw_array[0]['D%d' % (row - 1)]/raw_array[0]['E%d' % (row - 1)]
+                    cureval['M%d' % row] = raw_array[0]['D%d' % (row - 1)]
 
-                    cureval['S%d' % row] = raw_array[1]['D%d' % (row - 1)]/raw_array[0]['E%d' % (row - 1)]
+                    cureval['S%d' % row] = raw_array[1]['D%d' % (row - 1)]
 
-                    cureval['Y%d' % row] = raw_array[2]['D%d' % (row - 1)]/raw_array[0]['E%d' % (row - 1)]
+                    cureval['Y%d' % row] = raw_array[2]['D%d' % (row - 1)]
 
                     cureval['N%d' % row] = math.exp(-raw_array[0]['D%d' % (row - 1)] / (temp * 0.00198588))
 
