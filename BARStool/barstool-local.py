@@ -6,6 +6,8 @@ import ttk
 from sys import platform
 import shutil
 from os import chdir, mkdir, path
+
+import BARStool_assemble
 from Config import Config
 
 class Application(tk.Frame):
@@ -35,6 +37,11 @@ class Application(tk.Frame):
         self.collect_check_settings = tk.IntVar()
         self.collect_check_BARS     = tk.IntVar()
 
+        self.label_text_path = tk.StringVar()
+        self.label_num_runs  = tk.IntVar()
+        self.label_text_m1   = tk.StringVar()
+        self.label_text_m2   = tk.StringVar()
+
         self.set_defaults()
 
         barstool_style = ttk.Style()
@@ -43,14 +50,16 @@ class Application(tk.Frame):
         self.tabs = ttk.Notebook(self)
 
         frame_prepare = ttk.Frame(self.tabs, style = 'My.TFrame')
+        frame_label   = ttk.Frame(self.tabs, style = 'My.TFrame')
         frame_collect = ttk.Frame(self.tabs, style = 'My.TFrame')
 
         self.tabs.add(frame_prepare, text = 'Prepare')
+        self.tabs.add(frame_label  , text = 'Label')
         self.tabs.add(frame_collect, text = 'Collect')
 
         self.tabs.grid(row = 1, column = 0, padx = 6, pady = 4, sticky = tk.W)
 
-        #Prepare tab
+        #Prepare tab <LANDMARK>
 
         self.prep_path_label = tk.Label(
             frame_prepare,
@@ -195,7 +204,112 @@ class Application(tk.Frame):
 
         self.quit_button1.grid(row = 9, column = 2, padx = 6, pady = 25)
 
-        #Copy tab
+        #Label tab <LANDMARK>
+
+        self.label_path_label = tk.Label(
+            frame_label,
+            text = 'Destination file path:'
+        )
+
+        self.label_path_path = tk.Button(
+            frame_label,
+            text = 'Open',
+            command = self.open_label_path
+        )
+
+        self.label_path_label.grid(row = 1, column = 0, padx = 6, pady = 4, sticky = tk.W)
+        self.label_path_path.grid(row = 1, column = 1, padx = 0, pady = 4, sticky = tk.W)
+
+        self.label_path_box = tk.Entry(
+            frame_label,
+            textvariable = self.label_text_path,
+            width = 40
+        )
+
+        self.label_path_box.grid(row = 1, column = 2, padx = 6, pady = 4)
+
+        self.label_path_label2 = tk.Label(
+            frame_label,
+            text = '(Should be the folder containing all the Blends runs.)'
+        )
+
+        self.label_path_label2.grid(row = 2, column = 0, columnspan = 3, padx = 6, pady = 4, sticky = tk.W)
+
+        self.label_num_label = tk.Label(
+            frame_label,
+            text = 'Number of runs:'
+        )
+
+        self.label_num_path = tk.Scale(
+            frame_label,
+            from_        = 1,
+            to           = 10,
+            orient       = tk.HORIZONTAL,
+            length       = 200,
+            variable     = self.label_num_runs
+        )
+
+        self.label_num_label.grid(row = 3, column = 0, padx = 6, pady = 4, sticky = tk.W)
+        self.label_num_path.grid(row = 3, column = 1, columnspan = 2, padx = 0, pady = 4, sticky = tk.W)
+
+        self.label_m1_label = tk.Label(
+            frame_label,
+            text = 'Base molecule name:'
+        )
+
+        self.label_m2_label = tk.Label(
+            frame_label,
+            text = 'Screen molecule name:'
+        )
+
+        self.label_m1_box = tk.Entry(
+            frame_label,
+            textvariable = self.label_text_m1,
+            width = 16
+        )
+
+        self.label_m2_box = tk.Entry(
+            frame_label,
+            textvariable = self.label_text_m2,
+            width = 16
+        )
+
+        self.label_m1_label.grid(row = 4, column = 0, padx = 6, pady = 4, sticky = tk.W)
+        self.label_m1_box.grid(row = 4, column = 1, padx = 0, pady = 4, sticky = tk.W)
+        self.label_m2_label.grid(row = 5, column = 0, padx = 6, pady = 4, sticky = tk.W)
+        self.label_m2_box.grid(row = 5, column = 1, padx = 0, pady = 4, sticky = tk.W)
+
+        # self.label_bigspace = tk.Label(
+        #     frame_label
+        # )
+        #
+        # self.label_bigspace.grid(row = 2, column = 0, rowspan = 7, padx = 6, pady = 120, sticky = tk.W)
+
+        self.label_button = tk.Button(
+            frame_label,
+            text    = 'Label',
+            command = self.label_main
+        )
+
+        self.label_button.grid(row = 9, column = 0, padx = 6, pady = 25)
+
+        self.default_button2 = tk.Button(
+            frame_label,
+            text    = 'Set All as Default',
+            command = self.change_default_label
+        )
+
+        self.default_button2.grid(row = 9, column = 1, padx = 6, pady = 10)
+
+        self.quit_button2 = tk.Button(
+            frame_label,
+            text    = 'Quit',
+            command = self.quit
+        )
+
+        self.quit_button2.grid(row = 9, column = 2, padx = 6, pady = 25)
+
+        #Copy tab <LANDMARK>
 
         self.collect_source_path_label = tk.Label(
             frame_collect,
@@ -360,25 +474,29 @@ class Application(tk.Frame):
 
         self.copy_button.grid(row = 9, column = 0, padx = 6, pady = 25)
 
-        self.default_button2 = tk.Button(
+        self.default_button3 = tk.Button(
             frame_collect,
             text    = 'Set All as Defaults',
             command = self.change_default_copy
         )
 
-        self.default_button2.grid(row = 9, column = 1, padx = 6, pady = 10)
+        self.default_button3.grid(row = 9, column = 1, padx = 6, pady = 10)
 
-        self.quit_button2 = tk.Button(
+        self.quit_button3 = tk.Button(
             frame_collect,
             text    = 'Quit',
             command = self.quit
         )
 
-        self.quit_button2.grid(row = 9, column = 2, padx = 6, pady = 25)
+        self.quit_button3.grid(row = 9, column = 2, padx = 6, pady = 25)
 
     def open_prep_path(self):
         self.prep_text_path.set(tkFileDialog.askdirectory(initialdir = self.prep_text_path.get()))
+        self.label_text_path.set(self.prep_text_path.get())
         self.collect_source_path.set(self.prep_text_path.get())
+
+    def open_label_path(self):
+        self.label_text_path.set(tkFileDialog.askdirectory(initialdir = self.label_text_path.get()))
 
     def open_source_path(self):
         self.collect_source_path.set(tkFileDialog.askdirectory(initialdir = self.collect_source_path.get()))
@@ -400,55 +518,51 @@ class Application(tk.Frame):
 
         print 'Preparing...'
 
-        f = self.prep_text_path.get()
+        index   = 1
+        success = True
 
-        pathchar = '/'
+        while success and (index < self.prep_num_runs.get() + 1):
+            success = BARStool_assemble.BS_prepare(
+                self.prep_text_path.get(),
+                index,
+                self.prep_text_m1.get(),
+                self.prep_text_m2.get(),
+                self.prep_text_ff.get(),
+                int(self.prep_num_frames.get()),
+                int(self.prep_temperature.get())
+            )
 
-        path = ''
-        for st in self.prep_text_path.get().split(pathchar)[1:len(self.prep_text_path.get().split(pathchar))]:
-            path += pathchar + st
-
-        full = '%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' % (
-            top,
-            'my $dir = \'%s%sLowest Energies\';' % (path, pathchar),
-            'my $monomer1 = "%s";' % self.prep_text_m1.get(),
-            'my $monomer2 = "%s";' % self.prep_text_m2.get(),
-            'my $forcefield = "%s";' % self.prep_text_ff.get(),
-            'my $numframes = %d;' % int(self.prep_num_frames.get()),
-            'my $temperature = %d;' % int(self.prep_temperature.get()),
-            bottom
-        )
-
-        print '\nSaving to %s%sLowest Energies...' % (path, pathchar)
-
-        try:
-            bars = open('%s%sLowest Energies%sbars.pl' % (path, pathchar, pathchar), 'w')
-            bars.write(full)
-        except IOError:
-            print 'Path not found: %s%sLowest Energies' % (path, pathchar)
-
-        if self.prep_num_runs.get() > 1:
-            for run in range(2, self.prep_num_runs.get() + 1):
-                full = '%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' % (
-                    self.top,
-                    'my $dir = \'%s (%d)%sLowest Energies\';' % (path, run, pathchar),
-                    'my $monomer1 = "%s";' % self.prep_text_m1.get(),
-                    'my $monomer2 = "%s";' % self.prep_text_m2.get(),
-                    'my $forcefield = "%s";' % self.prep_text_ff.get(),
-                    'my $numframes = %d;' % int(self.prep_num_frames.get()),
-                    'my $temperature = %d;' % int(self.prep_temperature.get()),
-                    bottom
-                )
-
-                print '\nSaving to %s (%d)%sLowest Energies...' % (path, run, pathchar)
-
-                try:
-                    bars = open('%s (%d)%sLowest Energies%sbars.pl' % (path, run, pathchar, pathchar), 'w')
-                    bars.write(full)
-                except IOError:
-                    print 'Path not found: %s (%d)%sLowest Energies' % (path, run, pathchar)
+            index += 1
 
         print '\nDone!\n'
+
+    def label_main(self):
+        if (self.label_text_path is None or self.label_num_runs is None
+                or self.label_text_m1 is None or self.label_text_m2 is None) \
+            or (self.label_text_path.get() == '' or self.label_text_m1.get() == ''
+                or self.label_text_m2.get() == ''):
+
+            tkMessageBox.showerror('BARStool', 'All inputs are required.')
+            return
+
+        print 'Labeling...'
+
+        index   = 1
+        success = True
+
+        while success and (index < self.label_num_runs.get() + 1):
+            success = BARStool_assemble.BS_label(
+                self.label_text_path.get(),
+                index,
+                self.label_text_m1.get(),
+                self.label_text_m2.get()
+            )
+
+            index += 1
+
+        print '\nDone!\n'
+
+    #TODO: convert collect_main into a BS_assemble function too
 
     def collect_main(self):
         if (self.collect_source_path is None or self.collect_dest_path is None
@@ -669,6 +783,30 @@ class Application(tk.Frame):
             pass
 
         try:
+            self.label_text_path.set(defaults['label_text_path'])
+        except KeyError:
+            self.label_text_path.set('')
+            pass
+
+        try:
+            self.label_num_runs.set(defaults['label_num_runs'])
+        except KeyError:
+            self.label_num_runs.set(1)
+            pass
+
+        try:
+            self.label_text_m1.set(defaults['label_text_m1'])
+        except KeyError:
+            self.label_text_m1.set('')
+            pass
+
+        try:
+            self.label_text_m2.set(defaults['label_text_m2'])
+        except KeyError:
+            self.label_text_m2.set('')
+            pass
+
+        try:
             self.collect_source_path.set(defaults['collect_source_path'])
         except KeyError:
             self.collect_source_path.set('')
@@ -747,6 +885,26 @@ class Application(tk.Frame):
         print 'Prepare tab defaults saved.'
         return
 
+    def change_default_label(self):
+        ## This block will overwrite the default BARStool directory if the user selects
+        ## the "Set All as Defaults" option
+
+        defaults = dict()
+
+        defaults['label_text_path'] = self.label_text_path.get()
+        defaults['label_num_runs']  = self.label_num_runs.get()
+        defaults['label_text_m1']   = self.label_text_m1.get()
+        defaults['label_text_m2']   = self.label_text_m2.get()
+
+        try:
+            Config.write_all(self.configdir, defaults)
+        except IOError:
+            Config.init(self.configdir)
+            Config.write_all(self.configdir, defaults)
+
+        print 'Label tab defaults saved.'
+        return
+
     def change_default_copy(self):
         ## This block will overwrite the default BARStool directory if the user selects
         ## the "Set All as Defaults" option
@@ -771,322 +929,6 @@ class Application(tk.Frame):
 
         print 'Copy tab defaults saved.'
         return
-
-top =\
-'''###############################################################################################################
-#                                                                                                             #
-#                                888888b.         d8888 8888888b.   .d8888b.                                  #
-#                                888  "88b       d88888 888   Y88b d88P  Y88b                                 #
-#                                888  .88P      d88P888 888    888 Y88b.                                      #
-#                                8888888K.     d88P 888 888   d88P  "Y888b.                                   #
-#                                888  "Y88b   d88P  888 8888888P"      "Y88b.                                 #
-#                                888    888  d88P   888 888 T88b         "888                                 #
-#                                888   d88P d8888888888 888  T88b  Y88b  d88P                                 #
-#                                8888888P" d88P     888 888   T88b  "Y8888P"                                  #
-#                                                                                                             #
-#                                      BLENDS ANALYSIS/REFINEMENT SCRIPT                                      #
-#                                                                                                             #
-#      This Perl script performs geometry optimization and Connolly volume measurements on each individual    #
-#  fragment and pair of fragments in each frame of the .xtd trajectory files output by the Blends module. It  #
-#  outputs three .txt files that can be used as inputs to the STX processing script.                          #
-#                                                                                                             #
-#      To use this script, copy it into the "Lowest energies" folder of the Blends run under consideration.   #
-#  Provide the requested information in the "Required input parameters" block below. Note that the variables  #
-#  $monomer1 and $monomer2 refer to the names of the files as they were input into Blends (i.e., the output   #
-#  .xtd trajectory files from Forcite). The forcefields commonly used are:                                    #
-#          (1) "Dreiding"                                                                                     #
-#          (2) "Dreiding_Dielectric_Const_78.4"                                                               #
-#          (3) "Universal"                                                                                    #
-#  The same forcefield that was used in Forcite/Blends should be used here.                                   #
-#                                                                                                             #
-#      Principal credit for the development of this script goes to Parveen Sood, a now-graduated student of   #
-#  CNBT Lab at the Georgia Institute of Technology under Seung Soon Jang. Additional credit goes to Nicholas  #
-#  Bond, an undergraduate researcher in CNBT Lab, for extensive script functionality improvements.            #
-#                                                                                                             #
-#  Copyright 2016 CNBT Lab. All rights reserved. Please use only with permission. If you believe you were     #
-#  sent this file in error, please delete it and contact the sender.                                          #
-#                                                                                                             #
-###############################################################################################################
-
-# Required input parameters:
-'''
-
-bottom =\
-'''
-# Optional: The naming convention of the output files can be customized:
-my $outfile1 = "$dir\\$monomer1 $monomer1.txt";
-my $outfile2 = "$dir\\$monomer1 $monomer2.txt";
-my $outfile3 = "$dir\\$monomer2 $monomer2.txt";
-
-use strict;
-use MaterialsScript qw(:all);
-my $doc=$Documents{"$monomer1 $monomer1.xtd"};
-my $trajectory = $Documents{"$monomer1 $monomer1.xtd"}->Trajectory;
-my $fh;
-for (my $i=1; $i<=$numframes; $i=$i+1){
-    $trajectory->CurrentFrame = $i;
-    my $copyDoc_Pair=$doc->SaveAs("./Blends_Traj_Perl_Trial_Pair_Frame_$i.xsd");
-    my $copyDoc_Frag_1=$doc->SaveAs("./Blends_Traj_Perl_Trial_Frag_1_Frame_$i.xsd");
-    my $copyDoc_Frag_2=$doc->SaveAs("./Blends_Traj_Perl_Trial_Frag_2_Frame_$i.xsd");
-    my $Atom_Of_Frag_1 = $copyDoc_Frag_1->Atoms("Frag_1");
-    my $fragment_1 = $Atom_Of_Frag_1->Fragment;
-    my $Atom_Of_Frag_2 = $copyDoc_Frag_2->Atoms("Frag_2");
-    my $fragment_2 = $Atom_Of_Frag_2->Fragment;
-    $fragment_1->Delete;
-    $fragment_2->Delete;
-    my $Frag_2_Only=$copyDoc_Frag_1->SaveAs("./Frag_2_Only_Frame_$i.xsd");
-    my $Frag_1_Only=$copyDoc_Frag_2->SaveAs("./Frag_1_Only_Frame_$i.xsd");
-
-     my $forcite_Pair= Modules->Forcite;
-     $forcite_Pair->ChangeSettings([
-     Quality => "Fine",
-     CurrentForcefield => "$forcefield",
-     ChargeAssignment => "Use current",MaxIterations=> 5000,
-     WriteLevel => "Silent"]);
-
-    my $results_Pair = $forcite_Pair->GeometryOptimization->Run($copyDoc_Pair); #Settings is optional parameter for run function
-
-    my $Etot_Pair=$copyDoc_Pair->PotentialEnergy;
-
-    my $avField_Pair= Tools->AtomVolumesSurfaces->Connolly->Calculate($copyDoc_Pair, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
-
-       $avField_Pair->IsVisible = "No";
-    my $Iso_Surface_Pair=   $avField_Pair->CreateIsosurface([IsoValue => 0,
-                            HasFlippedNormals => "No"]);
-    my $Connolly_Vol_Pair=$Iso_Surface_Pair->EnclosedVolume;
-
-     my $forcite_Frag_1= Modules->Forcite;
-     $forcite_Frag_1->ChangeSettings([
-     Quality => "Fine",
-     CurrentForcefield => "$forcefield",
-     ChargeAssignment => "Use current",MaxIterations=> 5000,WriteLevel => "Silent"]);
-
-
-    my $results_Frag_1 = $forcite_Frag_1->GeometryOptimization->Run($Frag_1_Only); #Settings is optional parameter for run function
-
-
-    my $Etot_Frag_1=$Frag_1_Only->PotentialEnergy;
-
-    my $avField_Frag_1= Tools->AtomVolumesSurfaces->Connolly->Calculate($Frag_1_Only, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
-
-       $avField_Frag_1->IsVisible = "No";
-    my $Iso_Surface_Frag_1=   $avField_Frag_1->CreateIsosurface([IsoValue => 0,
-                            HasFlippedNormals => "No"]);
-    my $Connolly_Vol_Frag_1=$Iso_Surface_Frag_1->EnclosedVolume;
-
-     my $forcite_Frag_2= Modules->Forcite;
-     $forcite_Frag_2->ChangeSettings([
-     Quality => "Fine",
-     CurrentForcefield => "$forcefield",
-     ChargeAssignment => "Use current",MaxIterations=> 5000,WriteLevel => "Silent"]);
-
-    my $results_Frag_2 = $forcite_Frag_2->GeometryOptimization->Run($Frag_2_Only); #Settings is optional parameter for run function
-
-    #Extract the result: Need to write functionality to print it to a file
-    my $Etot_Frag_2=$Frag_2_Only->PotentialEnergy;
-
-    my $avField_Frag_2= Tools->AtomVolumesSurfaces->Connolly->Calculate($Frag_2_Only, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
-
-       $avField_Frag_2->IsVisible = "No";
-    my $Iso_Surface_Frag_2=   $avField_Frag_2->CreateIsosurface([IsoValue => 0,
-                            HasFlippedNormals => "No"]);
-    my $Connolly_Vol_Frag_2=$Iso_Surface_Frag_2->EnclosedVolume;
-
-  if ($i == 1) {
-  open($fh, '>', $outfile1) or die "File not opened";
-
-  printf $fh  "%%22s %%22s %%22s %%22s %%22s %%22s %%22s\\n", "E_Pair (kcal/mol),","E_Frag_1 (kcal/mol),","E_Frag_2 (kcal/mol),","Del_E (kcal/mol),","CV_Pair (A^3),","CV_Frag_1 (A^3),","CV_Frag_2 (A^3)";
-
-    }
-
-    my $Del_E=$Etot_Pair-($Etot_Frag_1+$Etot_Frag_2);
-    printf $fh "%%22.5f, %%22.5f, %%22.5f, %%22.5f, %%22.5f, %%22.5f, %%22.5f\\n", $Etot_Pair,$Etot_Frag_1,$Etot_Frag_2,$Del_E,$Connolly_Vol_Pair,$Connolly_Vol_Frag_1,$Connolly_Vol_Frag_2;
-
-    $copyDoc_Pair->Delete;
-    $copyDoc_Frag_1->Delete;
-    $copyDoc_Frag_2->Delete;
-    $Frag_1_Only->Delete;
-    $Frag_2_Only->Delete;
-}
-
-my $doc=$Documents{"$monomer1 $monomer2.xtd"};
-my $trajectory = $Documents{"$monomer1 $monomer2.xtd"}->Trajectory;
-my $fh;
-for (my $i=1; $i<=$numframes; $i=$i+1){
-    $trajectory->CurrentFrame = $i;
-    my $copyDoc_Pair=$doc->SaveAs("./Blends_Traj_Perl_Trial_Pair_Frame_$i.xsd");
-    my $copyDoc_Frag_1=$doc->SaveAs("./Blends_Traj_Perl_Trial_Frag_1_Frame_$i.xsd");
-    my $copyDoc_Frag_2=$doc->SaveAs("./Blends_Traj_Perl_Trial_Frag_2_Frame_$i.xsd");
-    my $Atom_Of_Frag_1 = $copyDoc_Frag_1->Atoms("Frag_1");
-    my $fragment_1 = $Atom_Of_Frag_1->Fragment;
-    my $Atom_Of_Frag_2 = $copyDoc_Frag_2->Atoms("Frag_2");
-    my $fragment_2 = $Atom_Of_Frag_2->Fragment;
-    $fragment_1->Delete;
-    $fragment_2->Delete;
-    my $Frag_2_Only=$copyDoc_Frag_1->SaveAs("./Frag_2_Only_Frame_$i.xsd");
-    my $Frag_1_Only=$copyDoc_Frag_2->SaveAs("./Frag_1_Only_Frame_$i.xsd");
-
-     my $forcite_Pair= Modules->Forcite;
-     $forcite_Pair->ChangeSettings([
-     Quality => "Fine",
-     CurrentForcefield => "$forcefield",
-     ChargeAssignment => "Use current",MaxIterations=> 5000,
-     WriteLevel => "Silent"]);
-
-    my $results_Pair = $forcite_Pair->GeometryOptimization->Run($copyDoc_Pair); #Settings is optional parameter for run function
-
-    my $Etot_Pair=$copyDoc_Pair->PotentialEnergy;
-
-    my $avField_Pair= Tools->AtomVolumesSurfaces->Connolly->Calculate($copyDoc_Pair, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
-
-       $avField_Pair->IsVisible = "No";
-    my $Iso_Surface_Pair=   $avField_Pair->CreateIsosurface([IsoValue => 0,
-                            HasFlippedNormals => "No"]);
-    my $Connolly_Vol_Pair=$Iso_Surface_Pair->EnclosedVolume;
-
-     my $forcite_Frag_1= Modules->Forcite;
-     $forcite_Frag_1->ChangeSettings([
-     Quality => "Fine",
-     CurrentForcefield => "$forcefield",
-     ChargeAssignment => "Use current",MaxIterations=> 5000,WriteLevel => "Silent"]);
-
-
-    my $results_Frag_1 = $forcite_Frag_1->GeometryOptimization->Run($Frag_1_Only); #Settings is optional parameter for run function
-
-
-    my $Etot_Frag_1=$Frag_1_Only->PotentialEnergy;
-
-    my $avField_Frag_1= Tools->AtomVolumesSurfaces->Connolly->Calculate($Frag_1_Only, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
-
-       $avField_Frag_1->IsVisible = "No";
-    my $Iso_Surface_Frag_1=   $avField_Frag_1->CreateIsosurface([IsoValue => 0,
-                            HasFlippedNormals => "No"]);
-    my $Connolly_Vol_Frag_1=$Iso_Surface_Frag_1->EnclosedVolume;
-
-     my $forcite_Frag_2= Modules->Forcite;
-     $forcite_Frag_2->ChangeSettings([
-     Quality => "Fine",
-     CurrentForcefield => "$forcefield",
-     ChargeAssignment => "Use current",MaxIterations=> 5000,WriteLevel => "Silent"]);
-
-    my $results_Frag_2 = $forcite_Frag_2->GeometryOptimization->Run($Frag_2_Only); #Settings is optional parameter for run function
-
-    #Extract the result: Need to write functionality to print it to a file
-    my $Etot_Frag_2=$Frag_2_Only->PotentialEnergy;
-
-    my $avField_Frag_2= Tools->AtomVolumesSurfaces->Connolly->Calculate($Frag_2_Only, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
-
-       $avField_Frag_2->IsVisible = "No";
-    my $Iso_Surface_Frag_2=   $avField_Frag_2->CreateIsosurface([IsoValue => 0,
-                            HasFlippedNormals => "No"]);
-    my $Connolly_Vol_Frag_2=$Iso_Surface_Frag_2->EnclosedVolume;
-
-  if ($i == 1) {
-  open($fh, '>', $outfile2) or die "File not opened";
-
-  printf $fh  "%%22s %%22s %%22s %%22s %%22s %%22s %%22s\\n", "E_Pair (kcal/mol),","E_Frag_1 (kcal/mol),","E_Frag_2 (kcal/mol),","Del_E (kcal/mol),","CV_Pair (A^3),","CV_Frag_1 (A^3),","CV_Frag_2 (A^3)";
-
-    }
-
-    my $Del_E=$Etot_Pair-($Etot_Frag_1+$Etot_Frag_2);
-    printf $fh "%%22.5f, %%22.5f, %%22.5f, %%22.5f, %%22.5f, %%22.5f, %%22.5f\\n", $Etot_Pair,$Etot_Frag_1,$Etot_Frag_2,$Del_E,$Connolly_Vol_Pair,$Connolly_Vol_Frag_1,$Connolly_Vol_Frag_2;
-
-    $copyDoc_Pair->Delete;
-    $copyDoc_Frag_1->Delete;
-    $copyDoc_Frag_2->Delete;
-    $Frag_1_Only->Delete;
-    $Frag_2_Only->Delete;
-}
-
-my $doc=$Documents{"$monomer2 $monomer2.xtd"};
-my $trajectory = $Documents{"$monomer2 $monomer2.xtd"}->Trajectory;
-my $fh;
-for (my $i=1; $i<=$numframes; $i=$i+1){
-    $trajectory->CurrentFrame = $i;
-    my $copyDoc_Pair=$doc->SaveAs("./Blends_Traj_Perl_Trial_Pair_Frame_$i.xsd");
-    my $copyDoc_Frag_1=$doc->SaveAs("./Blends_Traj_Perl_Trial_Frag_1_Frame_$i.xsd");
-    my $copyDoc_Frag_2=$doc->SaveAs("./Blends_Traj_Perl_Trial_Frag_2_Frame_$i.xsd");
-    my $Atom_Of_Frag_1 = $copyDoc_Frag_1->Atoms("Frag_1");
-    my $fragment_1 = $Atom_Of_Frag_1->Fragment;
-    my $Atom_Of_Frag_2 = $copyDoc_Frag_2->Atoms("Frag_2");
-    my $fragment_2 = $Atom_Of_Frag_2->Fragment;
-    $fragment_1->Delete;
-    $fragment_2->Delete;
-    my $Frag_2_Only=$copyDoc_Frag_1->SaveAs("./Frag_2_Only_Frame_$i.xsd");
-    my $Frag_1_Only=$copyDoc_Frag_2->SaveAs("./Frag_1_Only_Frame_$i.xsd");
-
-     my $forcite_Pair= Modules->Forcite;
-     $forcite_Pair->ChangeSettings([
-     Quality => "Fine",
-     CurrentForcefield => "$forcefield",
-     ChargeAssignment => "Use current",MaxIterations=> 5000,
-     WriteLevel => "Silent"]);
-
-    my $results_Pair = $forcite_Pair->GeometryOptimization->Run($copyDoc_Pair); #Settings is optional parameter for run function
-
-    my $Etot_Pair=$copyDoc_Pair->PotentialEnergy;
-
-    my $avField_Pair= Tools->AtomVolumesSurfaces->Connolly->Calculate($copyDoc_Pair, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
-
-       $avField_Pair->IsVisible = "No";
-    my $Iso_Surface_Pair=   $avField_Pair->CreateIsosurface([IsoValue => 0,
-                            HasFlippedNormals => "No"]);
-    my $Connolly_Vol_Pair=$Iso_Surface_Pair->EnclosedVolume;
-
-     my $forcite_Frag_1= Modules->Forcite;
-     $forcite_Frag_1->ChangeSettings([
-     Quality => "Fine",
-     CurrentForcefield => "$forcefield",
-     ChargeAssignment => "Use current",MaxIterations=> 5000,WriteLevel => "Silent"]);
-
-
-    my $results_Frag_1 = $forcite_Frag_1->GeometryOptimization->Run($Frag_1_Only); #Settings is optional parameter for run function
-
-
-    my $Etot_Frag_1=$Frag_1_Only->PotentialEnergy;
-
-    my $avField_Frag_1= Tools->AtomVolumesSurfaces->Connolly->Calculate($Frag_1_Only, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
-
-       $avField_Frag_1->IsVisible = "No";
-    my $Iso_Surface_Frag_1=   $avField_Frag_1->CreateIsosurface([IsoValue => 0,
-                            HasFlippedNormals => "No"]);
-    my $Connolly_Vol_Frag_1=$Iso_Surface_Frag_1->EnclosedVolume;
-
-     my $forcite_Frag_2= Modules->Forcite;
-     $forcite_Frag_2->ChangeSettings([
-     Quality => "Fine",
-     CurrentForcefield => "$forcefield",
-     ChargeAssignment => "Use current",MaxIterations=> 5000,WriteLevel => "Silent"]);
-
-    my $results_Frag_2 = $forcite_Frag_2->GeometryOptimization->Run($Frag_2_Only); #Settings is optional parameter for run function
-
-    #Extract the result: Need to write functionality to print it to a file
-    my $Etot_Frag_2=$Frag_2_Only->PotentialEnergy;
-
-    my $avField_Frag_2= Tools->AtomVolumesSurfaces->Connolly->Calculate($Frag_2_Only, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
-
-       $avField_Frag_2->IsVisible = "No";
-    my $Iso_Surface_Frag_2=   $avField_Frag_2->CreateIsosurface([IsoValue => 0,
-                            HasFlippedNormals => "No"]);
-    my $Connolly_Vol_Frag_2=$Iso_Surface_Frag_2->EnclosedVolume;
-
-  if ($i == 1) {
-  open($fh, '>', $outfile3) or die "File not opened";
-
-  printf $fh  "%%22s %%22s %%22s %%22s %%22s %%22s %%22s\\n", "E_Pair (kcal/mol),","E_Frag_1 (kcal/mol),","E_Frag_2 (kcal/mol),","Del_E (kcal/mol),","CV_Pair (A^3),","CV_Frag_1 (A^3),","CV_Frag_2 (A^3)";
-
-    }
-
-    my $Del_E=$Etot_Pair-($Etot_Frag_1+$Etot_Frag_2);
-    printf $fh "%%22.5f, %%22.5f, %%22.5f, %%22.5f, %%22.5f, %%22.5f, %%22.5f\\n", $Etot_Pair,$Etot_Frag_1,$Etot_Frag_2,$Del_E,$Connolly_Vol_Pair,$Connolly_Vol_Frag_1,$Connolly_Vol_Frag_2;
-
-    $copyDoc_Pair->Delete;
-    $copyDoc_Frag_1->Delete;
-    $copyDoc_Frag_2->Delete;
-    $Frag_1_Only->Delete;
-    $Frag_2_Only->Delete;
-}
-'''
 
 app = Application()
 app.master.title('BARStool')
