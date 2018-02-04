@@ -562,8 +562,6 @@ class Application(tk.Frame):
 
         print '\nDone!\n'
 
-    #TODO: convert collect_main into a BS_assemble function too
-
     def collect_main(self):
         if (self.collect_source_path is None or self.collect_dest_path is None
                 or self.collect_num_runs is None or self.collect_text_m1 is None
@@ -582,156 +580,27 @@ class Application(tk.Frame):
 
         pathchar = '/'
 
-        dest_folder = '%s%s%s' % (self.collect_dest_path.get(), pathchar, self.collect_source_path.get().split(pathchar)[-1])
+        index = 1
 
-        try:
-            print 'Creating directory %s...' % dest_folder
-            mkdir(dest_folder)
-        except OSError:
-            print 'Directory %s already exists.' % dest_folder
+        index   = 1
+        success = True
 
-        source_path = '%s%s%s Blends Mixing' % (self.collect_source_path.get(), pathchar, self.collect_text_m1.get())
-        dest_path   = '%s%s%s Blends Mixing' % (dest_folder, pathchar, self.collect_text_m1.get())
+        while success and (index < self.label_num_runs.get() + 1):
+            success = BARStool_assemble.BS_collect(
+                self.collect_dest_path.get(),
+                self.collect_source_path.get(),
+                index,
+                self.collect_text_m1.get(),
+                self.collect_text_m2.get(),
+                self.collect_check_std.get(),
+                self.collect_check_out.get(),
+                self.collect_check_settings.get(),
+                self.collect_check_BARS.get()
+            )
 
-        try:
-            print 'Creating directory %s...' % dest_path
-            mkdir(dest_path)
-        except OSError:
-            print 'Directory %s already exists.' % dest_path
+            index += 1
 
-        if self.collect_check_std.get():
-            std_source = '%s%s%s.std' % (source_path, pathchar, self.collect_text_m1.get())
-            std_dest   = '%s%s%s.std' % (dest_path, pathchar, self.collect_text_m1.get())
-
-            try:
-                print 'Copying %s to %s...\n' % (std_source, std_dest)
-                shutil.copy(std_source, std_dest)
-            except IOError:
-                print 'Directory not found: %s' % std_source
-
-        if self.collect_check_out.get():
-            out_path = '%s%sLowest Energies' % (source_path, pathchar)
-            print out_path
-
-            outfile1_source = '%s%s%s %s.txt' % (out_path, pathchar, self.collect_text_m1.get(), self.collect_text_m1.get())
-            outfile2_source = '%s%s%s %s.txt' % (out_path, pathchar, self.collect_text_m1.get(), self.collect_text_m2.get())
-            outfile3_source = '%s%s%s %s.txt' % (out_path, pathchar, self.collect_text_m2.get(), self.collect_text_m2.get())
-
-            outfile1_dest = '%s%s%s %s.txt' % (dest_path, pathchar, self.collect_text_m1.get(), self.collect_text_m1.get())
-            outfile2_dest = '%s%s%s %s.txt' % (dest_path, pathchar, self.collect_text_m1.get(), self.collect_text_m2.get())
-            outfile3_dest = '%s%s%s %s.txt' % (dest_path, pathchar, self.collect_text_m2.get(), self.collect_text_m2.get())
-
-            try:
-                print 'Copying %s to %s...\n' % (outfile1_source, outfile1_dest)
-                shutil.copy(outfile1_source, outfile1_dest)
-            except IOError:
-                print 'Directory not found: %s' % outfile1_source
-
-            try:
-                print 'Copying %s to %s...\n' % (outfile2_source, outfile2_dest)
-                shutil.copy(outfile2_source, outfile2_dest)
-            except IOError:
-                print 'Directory not found: %s' % outfile2_source
-
-            try:
-                print 'Copying %s to %s...\n' % (outfile3_source, outfile3_dest)
-                shutil.copy(outfile3_source, outfile3_dest)
-            except IOError:
-                print 'Directory not found: %s' % outfile3_source
-
-        if self.collect_check_settings.get():
-            settings_source = '%s%s%s.txt' % (source_path, pathchar, self.collect_text_m1.get())
-            settings_dest   = '%s%s%s.txt' % (dest_path, pathchar, self.collect_text_m1.get())
-
-            try:
-                print 'Copying %s to %s...\n' % (settings_source, settings_dest)
-                shutil.copy(settings_source, settings_dest)
-            except IOError:
-                print 'Directory not found: %s' % settings_source
-
-        if self.collect_check_BARS.get():
-            BARS_source = '%s%sbars.pl' % (out_path, pathchar)
-            BARS_dest   = '%s%sbars.pl' % (dest_path, pathchar)
-
-            try:
-                print 'Copying %s to %s...\n' % (BARS_source, BARS_dest)
-                shutil.copy(BARS_source, BARS_dest)
-            except IOError:
-                print 'Directory not found: %s' % BARS_source
-
-        if self.collect_num_runs.get() > 1:
-            for run in range(2, self.collect_num_runs.get() + 1):
-
-                source_path = '%s%s%s Blends Mixing (%d)' % (self.collect_source_path.get(), pathchar, self.collect_text_m1.get(), run)
-                dest_path   = '%s%s%s Blends Mixing (%d)' % (dest_folder, pathchar, self.collect_text_m1.get(), run)
-
-                try:
-                    print 'Creating directory %s...' % dest_path
-                    mkdir(dest_path)
-                except OSError:
-                    print 'Directory %s already exists.' % dest_path
-
-                if self.collect_check_std.get():
-                    std_source = '%s%s%s.std' % (source_path, pathchar, self.collect_text_m1.get())
-                    std_dest   = '%s%s%s.std' % (dest_path, pathchar, self.collect_text_m1.get())
-
-                    try:
-                        print 'Copying %s to %s...\n' % (std_source, std_dest)
-                        shutil.copy(std_source, std_dest)
-                    except IOError:
-                        print 'Directory not found: %s' % std_source
-
-                if self.collect_check_out.get():
-                    out_path = '%s%sLowest Energies' % (source_path, pathchar)
-                    print out_path
-
-                    outfile1_source = '%s%s%s %s.txt' % (out_path, pathchar, self.collect_text_m1.get(), self.collect_text_m1.get())
-                    outfile2_source = '%s%s%s %s.txt' % (out_path, pathchar, self.collect_text_m1.get(), self.collect_text_m2.get())
-                    outfile3_source = '%s%s%s %s.txt' % (out_path, pathchar, self.collect_text_m2.get(), self.collect_text_m2.get())
-
-                    outfile1_dest = '%s%s%s %s.txt' % (dest_path, pathchar, self.collect_text_m1.get(), self.collect_text_m1.get())
-                    outfile2_dest = '%s%s%s %s.txt' % (dest_path, pathchar, self.collect_text_m1.get(), self.collect_text_m2.get())
-                    outfile3_dest = '%s%s%s %s.txt' % (dest_path, pathchar, self.collect_text_m2.get(), self.collect_text_m2.get())
-
-                    try:
-                        print 'Copying %s to %s...\n' % (outfile1_source, outfile1_dest)
-                        shutil.copy(outfile1_source, outfile1_dest)
-                    except IOError:
-                        print 'Directory not found: %s' % outfile1_source
-
-                    try:
-                        print 'Copying %s to %s...\n' % (outfile2_source, outfile2_dest)
-                        shutil.copy(outfile2_source, outfile2_dest)
-                    except IOError:
-                        print 'Directory not found: %s' % outfile2_source
-
-                    try:
-                        print 'Copying %s to %s...\n' % (outfile3_source, outfile3_dest)
-                        shutil.copy(outfile3_source, outfile3_dest)
-                    except IOError:
-                        print 'Directory not found: %s' % outfile3_source
-
-                if self.collect_check_settings.get():
-                    settings_source = '%s%s%s.txt' % (source_path, pathchar, self.collect_text_m1.get())
-                    settings_dest   = '%s%s%s.txt' % (dest_path, pathchar, self.collect_text_m1.get())
-
-                    try:
-                        print 'Copying %s to %s...\n' % (settings_source, settings_dest)
-                        shutil.copy(settings_source, settings_dest)
-                    except IOError:
-                        print 'Directory not found: %s' % settings_source
-
-                if self.collect_check_BARS.get():
-                    BARS_source = '%s%sbars.pl' % (out_path, pathchar)
-                    BARS_dest   = '%s%sbars.pl' % (dest_path, pathchar)
-
-                    try:
-                        print 'Copying %s to %s...\n' % (BARS_source, BARS_dest)
-                        shutil.copy(BARS_source, BARS_dest)
-                    except IOError:
-                        print 'Directory not found: %s' % BARS_source
-
-        print 'Done!'
+        print '\nDone!\n'
 
     def set_defaults(self):
         try:

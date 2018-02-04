@@ -51,21 +51,87 @@ def BS_label(text_path, index, m1, m2):
 
     path += '%s%sLowest Energies' % (index_paren, pathchar)
 
-    print '\nSaving to %s...' % path
-
     try:
         __label__(path, m1, m2)
-    # except Exception:
-    #     print 'An error occurred.'
-    #     return False
     except IOError:
-        print 'Path not found: %s%s%sLowest Energies' % (path, index_paren, pathchar)
+        print 'Path not found: %s' % path
         return False
 
     return True
 
-def BS_collect():
-    print 'collect'
+def BS_collect(dest, src, index, m1, m2, c_std, c_out, c_set, c_bar):
+    dest_folder = '%s%s%s' % (dest, pathchar, src.split(pathchar)[-1])
+
+    index_paren = ''
+
+    if index == 1:
+        try:
+            print 'Creating directory %s...' % dest_folder
+            mkdir(dest_folder)
+        except OSError:
+            print 'Directory \"%s\" already exists.' % dest_folder
+    else:
+        index_paren = ' (%d)' % index
+
+    source_path = '%s%s%s Blends Mixing%s' % (src, pathchar, m1, index_paren)
+    dest_path   = '%s%s%s Blends Mixing%s' % (dest_folder, pathchar, m1, index_paren)
+
+    try:
+        print 'Creating directory %s...' % dest_path
+        mkdir(dest_path)
+    except OSError:
+        print 'Directory \"%s\" already exists.' % dest_path
+
+    if c_std:
+        std_source = '%s%s%s.std' % (source_path, pathchar, m1)
+        std_dest   = '%s%s%s.std' % (dest_path, pathchar, m1)
+
+        try:
+            print 'Copying %s to %s...\n' % (std_source, std_dest)
+            shutil.copy(std_source, std_dest)
+        except IOError:
+            print 'File not found: %s' % std_source
+            return False
+
+    if c_out:
+        out_path = '%s%sLowest Energies' % (source_path, pathchar)
+
+        pair     = [(m1, m1), (m1, m2), (m2, m2)]
+        out_src  = ['', '', '']
+        out_dest = ['', '', '']
+
+        for i in range(3):
+            out_src[i]  = '%s%s%s %s.txt' % (out_path,  pathchar, pair[i][0], pair[i][1])
+            out_dest[i] = '%s%s%s %s.txt' % (dest_path, pathchar, pair[i][0], pair[i][1])
+
+            try:
+                print 'Copying %s to %s...\n' % (out_src[i], out_dest[i])
+                shutil.copy(out_src[i], out_dest[i])
+            except IOError:
+                print 'Directory not found: %s\n' % out_src[i]
+                return False
+
+    if c_set:
+        settings_source = '%s%s%s.txt' % (source_path, pathchar, m1)
+        settings_dest   = '%s%s%s.txt' % (dest_path, pathchar, m1)
+
+        try:
+            print 'Copying %s to %s...\n' % (settings_source, settings_dest)
+            shutil.copy(settings_source, settings_dest)
+        except IOError:
+            print 'File not found: %s' % settings_source
+            return False
+
+    if c_bar:
+        bars_source = '%s%sbars.pl' % (source_path, pathchar)
+        bars_dest   = '%s%sbars.pl' % (dest_path, pathchar)
+
+        try:
+            print 'Copying %s to %s...\n' % (bars_source, bars_dest)
+            shutil.copy(bars_source, bars_dest)
+        except IOError:
+            print 'File not found: %s' % bars_source
+            return False
 
     return True
 
@@ -82,6 +148,7 @@ def __label__(path, m1, m2):
         index = 0
         contents = ''
         f = open(pair, 'r')
+        fo = open('%s-orig.xtd' % pair, 'w')
         prev = ''
         fn = 1
         for line in f:
@@ -89,24 +156,25 @@ def __label__(path, m1, m2):
             prev = line
 
             contents += __edit__(line, index, fn)
+            fo.write(line)
             index += 1
 
         f.close()
+        fo.close()
 
-        f2 = open('%s-2.xtd' % pair, 'w')
+        f2 = open('%s' % pair, 'w')
+
+        print '\nSaving to %s...' % path
+
         f2.write(contents)
         f2.close()
-
-    for key in pairs:
-        print key
 
     return 1
 
 def __edit__(line, index, fn):
     res = {
         'start' : re.compile(r'\w*<Atom3d '),
-        'name'  : re.compile(r'Name=\"[^\"]*\"'),
-        'frag'  : re.compile(r'Name=\"Frag_[1-2]\"')
+        'name'  : re.compile(r'Name=\"[^\"]*\"')
     }
 
     split_start = re.split(res['start'], line)
@@ -121,7 +189,7 @@ def __edit__(line, index, fn):
     if len(split_name) < 2:
         return line
 
-    return '%s<Atom3d %sName=\"%s\"%s\n' % (
+    return '%s<Atom3d %sName=\"%s\"%s' % (
         split_start[0],
         split_name[0],
         newname,
@@ -138,7 +206,6 @@ def __get_fn__(curr, prev):
     split_prev = re.split(res['prev'], prev)
 
     if len(split_curr) > 1 and len(split_prev) == 1:
-        print curr
         return 1
 
     return 0
