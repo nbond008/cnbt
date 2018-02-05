@@ -143,11 +143,19 @@ def __label__(path, m1, m2):
         '%s%s%s %s.xtd' % (path, pathchar, m2, m2)
     ]
 
-    for pair in pairs:
+    newpairs = [
+        '%s%s%s %s-new.xtd' % (path, pathchar, m1, m1),
+        '%s%s%s %s-new.xtd' % (path, pathchar, m1, m2),
+        '%s%s%s %s-new.xtd' % (path, pathchar, m2, m2)
+    ]
+
+    print '\nSaving to %s...' % path
+
+    for i in range(3):
+        pair = pairs[i]
         index = 0
         contents = ''
         f = open(pair, 'r')
-        fo = open('%s-orig.xtd' % pair, 'w')
         prev = ''
         fn = 1
         for line in f:
@@ -155,15 +163,11 @@ def __label__(path, m1, m2):
             prev = line
 
             contents += __edit__(line, index, fn)
-            fo.write(line)
             index += 1
 
         f.close()
-        fo.close()
 
-        f2 = open('%s' % pair, 'w')
-
-        print '\nSaving to %s...' % path
+        f2 = open('%s' % newpairs[i], 'w')
 
         f2.write(contents)
         f2.close()
@@ -257,8 +261,8 @@ my $outfile3 = "$dir\\$monomer2 $monomer2.txt";
 
 use strict;
 use MaterialsScript qw(:all);
-my $doc=$Documents{"$monomer1 $monomer1.xtd"};
-my $trajectory = $Documents{"$monomer1 $monomer1.xtd"}->Trajectory;
+my $doc=$Documents{"$monomer1 $monomer1-new.xtd"};
+my $trajectory = $Documents{"$monomer1 $monomer1-new.xtd"}->Trajectory;
 my $fh;
 for (my $i=1; $i<=$numframes; $i=$i+1){
     $trajectory->CurrentFrame = $i;
@@ -346,8 +350,8 @@ for (my $i=1; $i<=$numframes; $i=$i+1){
     $Frag_2_Only->Delete;
 }
 
-my $doc=$Documents{"$monomer1 $monomer2.xtd"};
-my $trajectory = $Documents{"$monomer1 $monomer2.xtd"}->Trajectory;
+my $doc=$Documents{"$monomer1 $monomer2-new.xtd"};
+my $trajectory = $Documents{"$monomer1 $monomer2-new.xtd"}->Trajectory;
 my $fh;
 for (my $i=1; $i<=$numframes; $i=$i+1){
     $trajectory->CurrentFrame = $i;
@@ -435,8 +439,8 @@ for (my $i=1; $i<=$numframes; $i=$i+1){
     $Frag_2_Only->Delete;
 }
 
-my $doc=$Documents{"$monomer2 $monomer2.xtd"};
-my $trajectory = $Documents{"$monomer2 $monomer2.xtd"}->Trajectory;
+my $doc=$Documents{"$monomer2 $monomer2-new.xtd"};
+my $trajectory = $Documents{"$monomer2 $monomer2-new.xtd"}->Trajectory;
 my $fh;
 for (my $i=1; $i<=$numframes; $i=$i+1){
     $trajectory->CurrentFrame = $i;
