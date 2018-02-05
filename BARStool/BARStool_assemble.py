@@ -16,9 +16,11 @@ def BS_prepare(text_path, index, m1, m2, ff, num_frames, temp):
     if index > 1:
         index_paren = ' (%d)' % index
 
+    path += '%s%s Blends Mixing%s' % (pathchar, m1, index_paren)
+
     full = '%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' % (
         top,
-        'my $dir = \'%s%s%sLowest Energies\';' % (path, index_paren, pathchar),
+        'my $dir = \'%s%sLowest Energies\';' % (path, pathchar),
         'my $monomer1 = "%s";' % m1,
         'my $monomer2 = "%s";' % m2,
         'my $forcefield = "%s";' % ff,
@@ -27,13 +29,13 @@ def BS_prepare(text_path, index, m1, m2, ff, num_frames, temp):
         bottom
     )
 
-    print '\nSaving to %s%s%sLowest Energies...' % (path, index_paren, pathchar)
+    print '\nSaving to %s%sLowest Energies...' % (path, pathchar)
 
     try:
-        bars = open('%s%s%sLowest Energies%sbars.pl' % (path, index_paren, pathchar, pathchar), 'w')
+        bars = open('%s%sLowest Energies%sBARS.pl' % (path, pathchar, pathchar), 'w')
         bars.write(full)
     except IOError:
-        print 'Path not found: %s%s%sLowest Energies' % (path, index_paren, pathchar)
+        print 'Path not found: %s%sLowest Energies' % (path, pathchar)
         return False
 
     return True
@@ -48,7 +50,7 @@ def BS_label(text_path, index, m1, m2):
     if index > 1:
         index_paren = ' (%d)' % index
 
-    path += '%s%sLowest Energies' % (index_paren, pathchar)
+    path += '%s%s Blends Mixing%s%sLowest Energies' % (pathchar, m1, index_paren, pathchar)
 
     try:
         __label__(path, m1, m2)
@@ -90,7 +92,7 @@ def BS_collect(dest, src, index, m1, m2, c_std, c_out, c_set, c_bar):
             shutil.copy(std_source, std_dest)
         except IOError:
             print 'File not found: %s' % std_source
-            return False
+            # return False
 
     if c_out:
         out_path = '%s%sLowest Energies' % (source_path, pathchar)
@@ -107,8 +109,8 @@ def BS_collect(dest, src, index, m1, m2, c_std, c_out, c_set, c_bar):
                 print 'Copying %s to %s...\n' % (out_src[i], out_dest[i])
                 shutil.copy(out_src[i], out_dest[i])
             except IOError:
-                print 'Directory not found: %s\n' % out_src[i]
-                return False
+                print 'File not found: %s\n' % out_src[i]
+                # return False
 
     if c_set:
         settings_source = '%s%s%s.txt' % (source_path, pathchar, m1)
@@ -119,18 +121,18 @@ def BS_collect(dest, src, index, m1, m2, c_std, c_out, c_set, c_bar):
             shutil.copy(settings_source, settings_dest)
         except IOError:
             print 'File not found: %s' % settings_source
-            return False
+            # return False
 
     if c_bar:
-        bars_source = '%s%sbars.pl' % (source_path, pathchar)
-        bars_dest   = '%s%sbars.pl' % (dest_path, pathchar)
+        bars_source = '%s%sBARS.pl' % (source_path, pathchar)
+        bars_dest   = '%s%sBARS.pl' % (dest_path, pathchar)
 
         try:
             print 'Copying %s to %s...\n' % (bars_source, bars_dest)
             shutil.copy(bars_source, bars_dest)
         except IOError:
             print 'File not found: %s' % bars_source
-            return False
+            # return False
 
     return True
 
