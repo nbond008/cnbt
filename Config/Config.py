@@ -2,8 +2,27 @@
 
 import getpass
 import re
-from os     import remove
-from shutil import copy
+
+res = {
+    'user_start'  : re.compile(r'.*<User '),
+    'field_start' : re.compile(r'.*<Field '),
+
+    'name'        : re.compile(r'Name=\"[^\"]*\"'),
+    'value'       : re.compile(r'Value=\"[^\"]*\"'),
+
+    'quotes'      : re.compile(r'\" '),
+    'end'         : re.compile(r'/>$ | /User>$')
+}
+
+const = {
+    'user'  : 'User',
+    'field' : 'Field',
+
+    'name'  : 'Name',
+    'value' : 'Value',
+
+    'tab'   : '    '
+}
 
 class Config(object):
     def __init__(self):
@@ -11,40 +30,13 @@ class Config(object):
 
 # read: parses through a given config file for information
 #
-# returns: array containing configuration data
-# params:  filename - path for config.txt
+# returns: dict containing configuration data for a specific user
+# params:  filename - path for config.xml
 #          user     - user whose default parameters will be read
 
     @staticmethod
     def read(filename, user = getpass.getuser()):
-        f = open(filename, 'r')
-
-        find_user = re.compile(r'.*:\n')
-
-        content = dict()
-
-        found = False
-        line = f.readline()
-
-        while not found and line:
-            if find_user.match(line) and line.split(':')[0] == user:
-                point = f.readline()
-                while not found and point:
-                    item = point.split('=')
-                    val = item[1].strip()
-                    try:
-                        val = int(val)
-                    except ValueError:
-                        val = val.strip('\'')
-                    content[item[0].strip()] = val
-                    point = f.readline()
-                    found = point == '\n'
-
-            line = f.readline()
-
-        f.close()
-
-        return content
+        return Config.__read__(filename)[user]
 
     @staticmethod
     def init(filename, user = getpass.getuser()):
@@ -52,7 +44,17 @@ class Config(object):
         f.close()
 
         f = open(filename, 'a')
-        f.write('%s:\n' % user)
+        textcontent = '<%s %s=\"%s\">\n' % (
+            const['user'],
+            const['name'],
+            user
+        )
+
+        textcontent += '</%s>\n' % (
+            const['user']
+        )
+
+        f.write(textcontent)
         f.close()
 
 # write: parses through a given config file for information
@@ -65,70 +67,88 @@ class Config(object):
 
     @staticmethod
     def write(filename, key, value, user = getpass.getuser()):
-        copy(filename, '%s_temp' % filename)
-        remove(filename)
-
-        f_temp = open('%s_temp' % filename, 'r')
-        f_new  = open(filename, 'w')
-
-        find_user = re.compile(r'.*:\n')
-
-        config = dict()
-
-        found = False
-        line = f_temp.readline()
-
-        while line:
-            found = False
-            if find_user.match(line):
-                u = line.split(':')[0]
-                content = dict()
-                point = f_temp.readline()
-                while not found and point:
-                    try:
-                        item = point.split('=')
-                        val = item[1].strip()
-                        try:
-                            val = int(val)
-                        except ValueError:
-                            val = val.strip('\'')
-                        content[item[0].strip()] = val
-                    except IndexError:
-                        pass
-                    point = f_temp.readline()
-                    found = point == '\n'
-
-                config[u] = content
-            line = f_temp.readline()
+        content = Config.__read__(filename)
 
         try:
-            config[user][key] = value
+            content[user][key] = value
         except KeyError:
-            f_new.write('%s:\n\n' % user)
-            f_temp.close()
-            f_new.close()
-            return Config.write(filename, key, value, user) #there's gotta be a less sketchy way to do this
+            content[user] = dict()
+            content[user][key] = value
 
-        for u in config:
-            f_new.write('%s:\n' % u)
-            for k in config[u]:
-                try:
-                    config[u][k] = int(config[u][k])
-                    f_new.write('    %s = %s\n' % (k, config[u][k]))
-                except ValueError:
-                    f_new.write('    %s = \'%s\'\n' % (k, config[u][k]))
-            f_new.write('\n')
+        textcontent = ''
 
-        remove('%s_temp' % filename)
+        try:
+            for u in content:
+                textcontent += '<%s %s=\"%s\">\n' % (
+                    const['user'],
+                    const['name'],
+                    u
+                )
+                for k in content[u]:
+                    textcontent += '%s<%s %s=\"%s\" %s=\"%s\">\n' % (
+                        const['tab'],
+                        const['field'],
+                        const['name'],
+                        k,
+                        const['value'],
+                        content[u][k]
+                    )
+                textcontent += '</%s>\n' % (
+                    const['user']
+                )
+        except KeyError:
+            return False
 
-        return 1
+        f = open(filename, 'w')
+
+        f.write(textcontent)
+
+        f.close()
+
+        return True
 
     @staticmethod
     def write_all(filename, defaults, user = getpass.getuser()):
         for key in defaults:
             Config.write(filename, key, defaults[key], user)
+# __read__
+#
+# returns: dict containing configuration data for all users
+# params:  filename - path for config.xml
 
-# Config.write('/Users/nick/cnbt/cnbt-repo/cnbt/Config/config-example.txt', 'key', 'spaghetti')
+    @staticmethod
+    def __read__(filename):
+        f = open(filename, 'r')
 
-# import site
-# print site.getsitepackages()
+        content = dict()
+        curruser = ''
+
+        for line in f:
+            if re.match(res['user_start'], line):
+                user_str = re.match(res['name'], re.split(res['user_start'], line)[1]).group()
+                curruser = user_str.split('\"')[1]
+                content[curruser] = dict()
+            elif re.match(res['field_start'], line):
+                field = re.split(res['end'], re.split(res['field_start'], line)[1])[0]
+
+                try:
+                    name_str  = re.match(res['name'], field).group().strip()
+                except AttributeError:
+                    name_str  = re.split(res['value'], field)[1].strip()
+
+                try:
+                    value_str = re.match(res['value'], field).group().strip()
+                except AttributeError:
+                    value_str = re.split(res['name'], field)[1].strip()
+
+                currname  = name_str.split('\"')[1]
+                currvalue = value_str.split('\"')[1]
+
+                try:
+                    content[curruser][currname] = currvalue
+                except Exception:
+                    print 'not nice >:['
+
+        f.close
+
+        return content

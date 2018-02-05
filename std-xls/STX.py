@@ -8,7 +8,7 @@ import stx_assemble
 from Config import Config
 
 class Application(tk.Frame):
-    configdir = '%s/config.txt' % path.dirname(path.realpath(__file__))
+    configdir = '%s/config.xml' % path.dirname(path.realpath(__file__))
 
     def __init__(self, master = None):
         tk.Frame.__init__(self, master)
@@ -387,7 +387,10 @@ class Application(tk.Frame):
             defaults = Config.read(self.configdir)
         except IOError:
             Config.init(self.configdir)
-            defaults = dict([])
+            defaults = dict()
+        except KeyError:
+            Config.init(self.configdir)
+            defaults = dict()
 
         try:
             self.text_path.set(defaults['text_path'])
