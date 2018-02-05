@@ -85,20 +85,29 @@ class Config(object):
                 content = dict()
                 point = f_temp.readline()
                 while not found and point:
-                    item = point.split('=')
-                    val = item[1].strip()
                     try:
-                        val = int(val)
-                    except ValueError:
-                        val = val.strip('\'')
-                    content[item[0].strip()] = val
+                        item = point.split('=')
+                        val = item[1].strip()
+                        try:
+                            val = int(val)
+                        except ValueError:
+                            val = val.strip('\'')
+                        content[item[0].strip()] = val
+                    except IndexError:
+                        pass
                     point = f_temp.readline()
                     found = point == '\n'
 
                 config[u] = content
             line = f_temp.readline()
 
-        config[user][key] = value
+        try:
+            config[user][key] = value
+        except KeyError:
+            f_new.write('%s:\n\n' % user)
+            f_temp.close()
+            f_new.close()
+            return Config.write(filename, key, value, user) #there's gotta be a less sketchy way to do this
 
         for u in config:
             f_new.write('%s:\n' % u)
@@ -111,6 +120,8 @@ class Config(object):
             f_new.write('\n')
 
         remove('%s_temp' % filename)
+
+        return 1
 
     @staticmethod
     def write_all(filename, defaults, user = getpass.getuser()):

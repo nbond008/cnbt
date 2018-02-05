@@ -1,5 +1,4 @@
 from sys import platform
-from sys import exit
 import shutil
 from os import chdir, mkdir, path
 from Config import Config
