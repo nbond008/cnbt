@@ -330,9 +330,9 @@ top =\
 bottom =\
 '''
 # Optional: The naming convention of the output files can be customized:
-my $outfile1 = "$dir\\$monomer1 $monomer1.txt";
-my $outfile2 = "$dir\\$monomer1 $monomer2.txt";
-my $outfile3 = "$dir\\$monomer2 $monomer2.txt";
+my $outfile1 = "$dir/$monomer1 $monomer1.txt";
+my $outfile2 = "$dir/$monomer1 $monomer2.txt";
+my $outfile3 = "$dir/$monomer2 $monomer2.txt";
 
 use strict;
 use MaterialsScript qw(:all);
@@ -411,12 +411,12 @@ for (my $i=1; $i<=$numframes; $i=$i+1){
   if ($i == 1) {
   open($fh, '>', $outfile1) or die "File not opened";
 
-  printf $fh  "%%22s %%22s %%22s %%22s %%22s %%22s %%22s\\n", "E_Pair (kcal/mol),","E_Frag_1 (kcal/mol),","E_Frag_2 (kcal/mol),","Del_E (kcal/mol),","CV_Pair (A^3),","CV_Frag_1 (A^3),","CV_Frag_2 (A^3)";
+  printf $fh  "%22s %22s %22s %22s %22s %22s %22s\\n", "E_Pair (kcal/mol),","E_Frag_1 (kcal/mol),","E_Frag_2 (kcal/mol),","Del_E (kcal/mol),","CV_Pair (A^3),","CV_Frag_1 (A^3),","CV_Frag_2 (A^3)";
 
     }
 
     my $Del_E=$Etot_Pair-($Etot_Frag_1+$Etot_Frag_2);
-    printf $fh "%%22.5f, %%22.5f, %%22.5f, %%22.5f, %%22.5f, %%22.5f, %%22.5f\\n", $Etot_Pair,$Etot_Frag_1,$Etot_Frag_2,$Del_E,$Connolly_Vol_Pair,$Connolly_Vol_Frag_1,$Connolly_Vol_Frag_2;
+    printf $fh "%22.5f, %22.5f, %22.5f, %22.5f, %22.5f, %22.5f, %22.5f\\n", $Etot_Pair,$Etot_Frag_1,$Etot_Frag_2,$Del_E,$Connolly_Vol_Pair,$Connolly_Vol_Frag_1,$Connolly_Vol_Frag_2;
 
     $copyDoc_Pair->Delete;
     $copyDoc_Frag_1->Delete;
@@ -500,12 +500,12 @@ for (my $i=1; $i<=$numframes; $i=$i+1){
   if ($i == 1) {
   open($fh, '>', $outfile2) or die "File not opened";
 
-  printf $fh  "%%22s %%22s %%22s %%22s %%22s %%22s %%22s\\n", "E_Pair (kcal/mol),","E_Frag_1 (kcal/mol),","E_Frag_2 (kcal/mol),","Del_E (kcal/mol),","CV_Pair (A^3),","CV_Frag_1 (A^3),","CV_Frag_2 (A^3)";
+  printf $fh  "%22s %22s %22s %22s %22s %22s %22s\\n", "E_Pair (kcal/mol),","E_Frag_1 (kcal/mol),","E_Frag_2 (kcal/mol),","Del_E (kcal/mol),","CV_Pair (A^3),","CV_Frag_1 (A^3),","CV_Frag_2 (A^3)";
 
     }
 
     my $Del_E=$Etot_Pair-($Etot_Frag_1+$Etot_Frag_2);
-    printf $fh "%%22.5f, %%22.5f, %%22.5f, %%22.5f, %%22.5f, %%22.5f, %%22.5f\\n", $Etot_Pair,$Etot_Frag_1,$Etot_Frag_2,$Del_E,$Connolly_Vol_Pair,$Connolly_Vol_Frag_1,$Connolly_Vol_Frag_2;
+    printf $fh "%22.5f, %22.5f, %22.5f, %22.5f, %22.5f, %22.5f, %22.5f\\n", $Etot_Pair,$Etot_Frag_1,$Etot_Frag_2,$Del_E,$Connolly_Vol_Pair,$Connolly_Vol_Frag_1,$Connolly_Vol_Frag_2;
 
     $copyDoc_Pair->Delete;
     $copyDoc_Frag_1->Delete;
@@ -589,12 +589,12 @@ for (my $i=1; $i<=$numframes; $i=$i+1){
   if ($i == 1) {
   open($fh, '>', $outfile3) or die "File not opened";
 
-  printf $fh  "%%22s %%22s %%22s %%22s %%22s %%22s %%22s\\n", "E_Pair (kcal/mol),","E_Frag_1 (kcal/mol),","E_Frag_2 (kcal/mol),","Del_E (kcal/mol),","CV_Pair (A^3),","CV_Frag_1 (A^3),","CV_Frag_2 (A^3)";
+  printf $fh  "%22s %22s %22s %22s %22s %22s %22s\\n", "E_Pair (kcal/mol),","E_Frag_1 (kcal/mol),","E_Frag_2 (kcal/mol),","Del_E (kcal/mol),","CV_Pair (A^3),","CV_Frag_1 (A^3),","CV_Frag_2 (A^3)";
 
     }
 
     my $Del_E=$Etot_Pair-($Etot_Frag_1+$Etot_Frag_2);
-    printf $fh "%%22.5f, %%22.5f, %%22.5f, %%22.5f, %%22.5f, %%22.5f, %%22.5f\\n", $Etot_Pair,$Etot_Frag_1,$Etot_Frag_2,$Del_E,$Connolly_Vol_Pair,$Connolly_Vol_Frag_1,$Connolly_Vol_Frag_2;
+    printf $fh "%22.5f, %22.5f, %22.5f, %22.5f, %22.5f, %22.5f, %22.5f\\n", $Etot_Pair,$Etot_Frag_1,$Etot_Frag_2,$Del_E,$Connolly_Vol_Pair,$Connolly_Vol_Frag_1,$Connolly_Vol_Frag_2;
 
     $copyDoc_Pair->Delete;
     $copyDoc_Frag_1->Delete;
