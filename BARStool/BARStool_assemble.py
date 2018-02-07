@@ -1,4 +1,5 @@
 from sys import platform
+from sys import exit
 import shutil
 from os import chdir, mkdir, path
 from Config import Config
@@ -155,16 +156,17 @@ def __label__(path, m1, m2):
 
     for i in range(3):
         pair = pairs[i]
+
+        bonds = __get_bonds__(pair)
+
         index = 0
         contents = ''
         f = open(pair, 'r')
-        prev = ''
-        fn = 1
+        # prev = ''
         for line in f:
-            fn += __get_fn__(line, prev)
-            prev = line
+            # prev = line
 
-            contents += __edit__(line, index, fn)
+            contents += __edit__(line, __get_fn__(line, bonds))
             index += 1
 
         f.close()
@@ -176,10 +178,11 @@ def __label__(path, m1, m2):
 
     return 1
 
-def __edit__(line, index, fn):
+def __edit__(line, fn):
     res = {
         'start' : re.compile(r'\w*<Atom3d '),
-        'name'  : re.compile(r'Name=\"[^\"]*\"')
+        'name'  : re.compile(r'Name=\"[^\"]*\"'),
+        'end'   : re.compile(r'>')
     }
 
     split_start = re.split(res['start'], line)
@@ -187,33 +190,103 @@ def __edit__(line, index, fn):
     if len(split_start) == 1:
         return line
 
-    split_name = re.split(res['name'], split_start[1])
-
     newname = 'Frag_%d' % fn
 
-    if len(split_name) < 2:
-        return line
+    if re.search(res['name'], line):
+        split_name = re.split(res['name'], split_start[1])
 
-    return '%s<Atom3d %sName=\"%s\"%s' % (
+        return '%s<Atom3d %sName=\"%s\"%s' % (
+            split_start[0],
+            split_name[0],
+            newname,
+            split_name[1]
+        )
+
+    return '%s<Atom3d Name=\"%s\" %s' % (
         split_start[0],
-        split_name[0],
         newname,
-        split_name[1]
+        split_start[1]
     )
 
-def __get_fn__(curr, prev):
+    return line
+
+def __get_fn__(line, bonds):
     res = {
-        'curr' : re.compile(r'\w*<Atom3d '),
-        'prev' : re.compile(r'\w*(</A)|(<P)')
+        'start' : re.compile(r'\w*<Atom3d '),
+        'id'    : re.compile(r'ID=\"[^\"]*\"'),
+        'nums'  : re.compile(r'[0-9]+')
     }
 
-    split_curr = re.split(res['curr'], curr)
-    split_prev = re.split(res['prev'], prev)
+    try:
+        if re.search(res['start'], line):
+            idstr = re.search(res['id'], line).group()
 
-    if len(split_curr) > 1 and len(split_prev) == 1:
-        return 1
+            num = int(re.search(res['nums'], idstr).group())
 
-    return 0
+            if num in bonds[0]:
+                return 1
+
+            if num in bonds[1]:
+                return 2
+
+            print 'Atom ID %d matches neither molecule.' % num
+    except AttributeError:
+        pass
+
+    return -1
+
+def __get_bonds__(path):
+    res = {
+        'start' : re.compile(r'\w*<Bond '),
+        'conn'  : re.compile(r'Connects=\"[^\"]*\"'),
+        'isol'  : re.compile(r'\"|\,'),
+        'nums'  : re.compile(r'\"[0-9]+,[0-9]+\"')
+    }
+
+    bonds = []
+    frag_1 = set()
+    frag_2 = set()
+
+    f = open(path, 'r')
+
+    i = 0
+
+    for line in f:
+        try:
+            if re.search(res['start'], line):
+                connstr = re.search(res['conn'], line).group()
+                nums = re.split(res['isol'], re.search(res['nums'], connstr).group())
+
+                bonds.append(set())
+                bonds[i].add(int(nums[1]))
+                bonds[i].add(int(nums[2]))
+
+                i += 1
+        except AttributeError:
+            pass
+
+    frag_1 = frag_1.union(bonds[0])
+
+    for i in range(1, len(bonds)):
+        neither = False
+        for b in bonds[i]:
+            if b not in frag_1:
+                neither = True
+            else:
+                neither = False
+                frag_1 = frag_1.union(bonds[i])
+
+        if neither:
+            frag_2.add(b)
+
+    for i in range(1, len(bonds)):
+        for b in bonds[i]:
+            if b in frag_2:
+                frag_2 = frag_2.union(bonds[i])
+
+    f.close()
+
+    return (frag_1, frag_2)
 
 top =\
 '''###############################################################################################################
