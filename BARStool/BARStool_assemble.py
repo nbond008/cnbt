@@ -1,7 +1,7 @@
 from sys import platform
 from sys import exit
 import shutil
-from os import chdir, mkdir, path
+from os import chdir, mkdir, path, error
 from Config import Config
 import re
 
@@ -125,14 +125,20 @@ def BS_collect(dest, src, index, m1, m2, c_std, c_out, c_set, c_bar):
             # return False
 
     if c_bar:
-        bars_source = '%s%sBARS.pl' % (source_path, pathchar)
-        bars_dest   = '%s%sBARS.pl' % (dest_path, pathchar)
+        bars_source = '%s%sLowest Energies%sBARS.pl' % (source_path, pathchar, pathchar)
+        bars_dest   = '%s%sLowest Energies%sBARS.pl' % (dest_path, pathchar, pathchar)
 
         try:
             print 'Copying %s to %s...\n' % (bars_source, bars_dest)
             shutil.copy(bars_source, bars_dest)
         except IOError:
-            print 'File not found: %s' % bars_source
+            bars_source = '%s%sLowest Energies%sbars.pl' % (source_path, pathchar, pathchar)
+            bars_dest   = '%s%sLowest Energies%sbars.pl' % (dest_path, pathchar, pathchar)
+
+            try:
+                shutil.copy(bars_source, bars_dest)
+            except:
+                print 'File not found: %s' % bars_source
             # return False
 
     return True
@@ -175,6 +181,25 @@ def __label__(path, m1, m2):
 
         f2.write(contents)
         f2.close()
+
+    try:
+        trj = [
+            '%s%s%s %s.trj' % (path, pathchar, m1, m1),
+            '%s%s%s %s.trj' % (path, pathchar, m1, m2),
+            '%s%s%s %s.trj' % (path, pathchar, m2, m2)
+        ]
+
+        newtrj = [
+            '%s%s%s %s-new.trj' % (path, pathchar, m1, m1),
+            '%s%s%s %s-new.trj' % (path, pathchar, m1, m2),
+            '%s%s%s %s-new.trj' % (path, pathchar, m2, m2)
+        ]
+
+        for i in range(len(trj)):
+            shutil.copy2(trj[i], newtrj[i])
+
+    except (IOError, error):
+        return 0
 
     return 1
 

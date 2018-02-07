@@ -585,7 +585,7 @@ class Application(tk.Frame):
         index   = 1
         success = True
 
-        while success and (index < self.label_num_runs.get() + 1):
+        while success and (index < self.collect_num_runs.get() + 1):
             success = BARStool_assemble.BS_collect(
                 self.collect_dest_path.get(),
                 self.collect_source_path.get(),
