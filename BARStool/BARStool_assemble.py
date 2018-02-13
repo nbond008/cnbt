@@ -188,39 +188,47 @@ def __label__(path, m1, m2):
 
 def __edit__(line, fn):
     res = {
-        'start' : re.compile(r'\w*<Atom3d '),
-        'name'  : re.compile(r'Name=\"[^\"]*\"'),
-        'end'   : re.compile(r'>')
+        'atom' : re.compile(r'\w*<Atom3d '),
+        'bond' : re.compile(r'\w*<Bond '),
+        'name' : re.compile(r'Name=\"[^\"]*\"'),
+        'end'  : re.compile(r'>')
     }
-
-    split_start = re.split(res['start'], line)
-
-    if len(split_start) == 1:
-        return line
 
     newname = 'Frag_%d' % fn
 
-    if re.search(res['name'], line):
-        split_name = re.split(res['name'], split_start[1])
+    if re.search(res['atom'], line):
+        split_start = re.split(res['atom'], line)
 
-        return '%s<Atom3d %sName=\"%s\"%s' % (
+        if re.search(res['name'], line):
+            split_name = re.split(res['name'], split_start[1])
+
+            return '%s<Atom3d %sName=\"%s\"%s' % (
+                split_start[0],
+                split_name[0],
+                newname,
+                split_name[1]
+            )
+
+        return '%s<Atom3d Name=\"%s\" %s' % (
             split_start[0],
-            split_name[0],
             newname,
-            split_name[1]
+            split_start[1]
         )
 
-    return '%s<Atom3d Name=\"%s\" %s' % (
-        split_start[0],
-        newname,
-        split_start[1]
-    )
+    elif re.search(res['bond'], line):
+        split_start = re.split(res['bond'], line)
+
+        return '%s<Bond Name=\"%s\" %s' % (
+            split_start[0],
+            newname,
+            split_start[1]
+        )
 
     return line
 
 def __get_fn__(line, bonds):
     res = {
-        'start' : re.compile(r'\w*<Atom3d '),
+        'start' : re.compile(r'\s*<\w* '),
         'id'    : re.compile(r'ID=\"[^\"]*\"'),
         'nums'  : re.compile(r'[0-9]+')
     }
@@ -237,7 +245,9 @@ def __get_fn__(line, bonds):
             if num in bonds[1]:
                 return 2
 
-            print 'Atom ID %d matches neither molecule.' % num
+            if num != 1:
+                print 'Item %d matches neither molecule.' % num
+
     except AttributeError:
         pass
 
