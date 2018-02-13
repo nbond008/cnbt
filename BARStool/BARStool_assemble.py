@@ -152,54 +152,37 @@ def __label__(path, m1, m2):
         '%s%s%s %s.xtd' % (path, pathchar, m2, m2)
     ]
 
-    newpairs = [
-        '%s%s%s %s-new.xtd' % (path, pathchar, m1, m1),
-        '%s%s%s %s-new.xtd' % (path, pathchar, m1, m2),
-        '%s%s%s %s-new.xtd' % (path, pathchar, m2, m2)
+    oldpairs = [
+        '%s%s%s %s-old.xtd' % (path, pathchar, m1, m1),
+        '%s%s%s %s-old.xtd' % (path, pathchar, m1, m2),
+        '%s%s%s %s-old.xtd' % (path, pathchar, m2, m2)
     ]
 
     print '\nSaving to %s...' % path
 
     for i in range(3):
-        pair = pairs[i]
+        try:
+            shutil.copy2(pairs[i], oldpairs[i])
+        except (IOError, error):
+            print 'Error copying old xtd.'
 
+    for pair in pairs:
         bonds = __get_bonds__(pair)
 
         index = 0
         contents = ''
         f = open(pair, 'r')
-        # prev = ''
         for line in f:
-            # prev = line
 
             contents += __edit__(line, __get_fn__(line, bonds))
             index += 1
 
         f.close()
 
-        f2 = open('%s' % newpairs[i], 'w')
+        f2 = open(pair, 'w')
 
         f2.write(contents)
         f2.close()
-
-    try:
-        trj = [
-            '%s%s%s %s.trj' % (path, pathchar, m1, m1),
-            '%s%s%s %s.trj' % (path, pathchar, m1, m2),
-            '%s%s%s %s.trj' % (path, pathchar, m2, m2)
-        ]
-
-        newtrj = [
-            '%s%s%s %s-new.trj' % (path, pathchar, m1, m1),
-            '%s%s%s %s-new.trj' % (path, pathchar, m1, m2),
-            '%s%s%s %s-new.trj' % (path, pathchar, m2, m2)
-        ]
-
-        for i in range(len(trj)):
-            shutil.copy2(trj[i], newtrj[i])
-
-    except (IOError, error):
-        return 0
 
     return 1
 
@@ -264,8 +247,10 @@ def __get_bonds__(path):
     res = {
         'start' : re.compile(r'\w*<Bond '),
         'conn'  : re.compile(r'Connects=\"[^\"]*\"'),
+        'id'    : re.compile(r'ID=\"[^\"]*\"'),
         'isol'  : re.compile(r'\"|\,'),
-        'nums'  : re.compile(r'\"[0-9]+,[0-9]+\"')
+        'pair'  : re.compile(r'\"[0-9]+,[0-9]+\"'),
+        'nums'  : re.compile(r'[0-9]+')
     }
 
     bonds = []
@@ -280,11 +265,16 @@ def __get_bonds__(path):
         try:
             if re.search(res['start'], line):
                 connstr = re.search(res['conn'], line).group()
-                nums = re.split(res['isol'], re.search(res['nums'], connstr).group())
+                pair = re.split(res['isol'], re.search(res['pair'], connstr).group())
+
+                idstr = re.search(res['id'], line).group()
+
+                num = int(re.search(res['nums'], idstr).group())
 
                 bonds.append(set())
-                bonds[i].add(int(nums[1]))
-                bonds[i].add(int(nums[2]))
+                bonds[i].add(int(pair[1]))
+                bonds[i].add(int(pair[2]))
+                bonds[i].add(int(num))
 
                 i += 1
         except AttributeError:
