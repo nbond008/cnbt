@@ -6,17 +6,21 @@ import re
 res = {
     'user_start'  : re.compile(r'.*<User '),
     'field_start' : re.compile(r'.*<Field '),
+    'list_start'  : re.compile(r'.*<List '),
+    'item_start'  : re.compile(r'.*<Item '),
 
     'name'        : re.compile(r'Name=\"[^\"]*\"'),
     'value'       : re.compile(r'Value=\"[^\"]*\"'),
 
     'quotes'      : re.compile(r'\" '),
-    'end'         : re.compile(r'/>$ | /User>$')
+    'end'         : re.compile(r'/[^\"]*>$')
 }
 
 const = {
     'user'  : 'User',
     'field' : 'Field',
+    'list'  : 'List',
+    'item'  : 'Item',
 
     'name'  : 'Name',
     'value' : 'Value',
@@ -85,14 +89,50 @@ class Config(object):
                     u
                 )
                 for k in content[u]:
-                    textcontent += '%s<%s %s=\"%s\" %s=\"%s\">\n' % (
-                        const['tab'],
-                        const['field'],
-                        const['name'],
-                        k,
-                        const['value'],
-                        content[u][k]
-                    )
+                    if isinstance(content[u][k], (str, unicode)): #not pythonic enough
+                        textcontent += '%s<%s %s=\"%s\" %s=\"%s\"/>\n' % (
+                            const['tab'],
+                            const['field'],
+                            const['name'],
+                            k,
+                            const['value'],
+                            content[u][k]
+                        )
+
+                    else:
+                        try:
+                            for item in content[u][k]:
+                                pass #check whether this is iterable instead of checking whether it's an int
+
+                            textcontent += '%s<%s %s=\"%s\">\n' % (
+                                const['tab'],
+                                const['list'],
+                                const['name'],
+                                k
+                            )
+                            for item in content[u][k]:
+                                textcontent += '%s%s<%s %s=\"%s\"/>\n' % (
+                                    const['tab'],
+                                    const['tab'],
+                                    const['item'],
+                                    const['value'],
+                                    item
+                                )
+
+                            textcontent += '%s</%s>\n' % (
+                                const['tab'],
+                                const['list']
+                            )
+                        except TypeError:
+                            textcontent += '%s<%s %s=\"%s\" %s=\"%s\"/>\n' % (
+                                const['tab'],
+                                const['field'],
+                                const['name'],
+                                k,
+                                const['value'],
+                                content[u][k]
+                            )
+
                 textcontent += '</%s>\n' % (
                     const['user']
                 )
@@ -122,6 +162,7 @@ class Config(object):
 
         content = dict()
         curruser = ''
+        currlist = ''
 
         for line in f:
             if re.match(res['user_start'], line):
@@ -148,6 +189,21 @@ class Config(object):
                     content[curruser][currname] = currvalue
                 except Exception:
                     print 'not nice >:['
+            elif re.match(res['list_start'], line):
+                flist = re.split(res['end'], re.split(res['list_start'], line)[1])[0]
+                name_str  = re.match(res['name'], flist).group().strip()
+                currlist  = name_str.split('\"')[1]
+
+                content[curruser][currlist] = list()
+            elif re.match(res['item_start'], line):
+                item = re.split(res['end'], re.split(res['item_start'], line)[1])[0]
+                value_str = re.match(res['value'], item).group().strip()
+                currvalue = value_str.split('\"')[1]
+
+                try:
+                    content[curruser][currlist].append(currvalue)
+                except KeyError:
+                    print 'List item without list!'
 
         f.close
 

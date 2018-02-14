@@ -10,6 +10,16 @@ from os import chdir, mkdir, path
 import BARStool_assemble
 from Config import Config
 
+const = {
+    'manage' : 'Manage...',
+    'ffpath' : path.dirname('C:\Program Files (x86)\Accelrys\Materials Studio 5.0\share\Resources\Simulation\ClassicalEnergy\FORCEFIELDS\Standard')
+}
+
+FILEOPENOPTIONS = {
+    'defaultextension' : '.off',
+    'filetypes'        : [('All files', '*.*'), ('Force Field files', '*.off')]
+}
+
 class Application(tk.Frame):
     configdir = '%s/config.xml' % path.dirname(path.realpath(__file__))
 
@@ -24,6 +34,7 @@ class Application(tk.Frame):
         self.prep_text_m1     = tk.StringVar()
         self.prep_text_m2     = tk.StringVar()
         self.prep_text_ff     = tk.StringVar()
+        self.prep_list_ff     = []
         self.prep_num_frames  = tk.StringVar()
         self.prep_temperature = tk.StringVar()
 
@@ -142,15 +153,12 @@ class Application(tk.Frame):
         self.prep_ff_menu = tk.OptionMenu(
             frame_prepare,
             self.prep_text_ff,
-            'Dreiding',
-            'Dreiding_Dielectric_Const_78.4',
-            'Universal',
-            'F3C',
-            'F3C_Dielectric_Const_78.4'
+            *self.prep_list_ff,
+            command = self.manage_ff_list
         )
 
         self.prep_ff_label.grid(row = 6, column = 0, padx = 6, pady = 4, sticky = tk.W)
-        self.prep_ff_menu.grid(row = 6, column = 1, columnspan = 2, padx = 0, pady = 4, sticky = tk.W)
+        self.prep_ff_menu.grid(row = 6, column = 1, columnspan = 1, padx = 0, pady = 4, sticky = tk.EW)
 
         self.prep_num_frames_label = tk.Label(
             frame_prepare,
@@ -504,6 +512,36 @@ class Application(tk.Frame):
     def open_dest_path(self):
         self.collect_dest_path.set(tkFileDialog.askdirectory(initialdir = self.collect_dest_path.get()))
 
+    #manage ff list <LANDMARK>
+    def manage_ff_list(self, text):
+        if text != const['manage']:
+            return 0
+
+        top = tk.Toplevel(self)
+        mgr = FFManager(top)
+        mgr.set_list_ff(self.prep_list_ff)
+
+    def set_list_ff(self, list_ff):
+        self.prep_list_ff = list_ff
+        self.prep_list_ff.append(const['manage'])
+
+        frame = self.prep_ff_menu.master
+
+        self.prep_ff_menu.destroy()
+
+        self.prep_ff_menu = tk.OptionMenu(
+            frame,
+            self.prep_text_ff,
+            *self.prep_list_ff,
+            command = self.manage_ff_list
+        )
+
+        self.prep_text_ff.set(self.prep_list_ff[0])
+
+        self.prep_ff_menu.grid(row = 6, column = 1, columnspan = 1, padx = 0, pady = 4, sticky = tk.EW)
+
+        self.change_default_prep()
+
     def prepare_main(self):
         if (self.prep_text_path is None or self.prep_num_runs is None
                 or self.prep_text_m1 is None or self.prep_text_m2 is None
@@ -643,6 +681,19 @@ class Application(tk.Frame):
             pass
 
         try:
+            self.prep_list_ff = defaults['prep_list_ff']
+        except KeyError:
+            self.prep_list_ff = [
+                'Dreiding',
+                'Dreiding_Dielectric_Const_78.4',
+                'Universal',
+                'F3C',
+                'F3C_Dielectric_Const_78.4'
+            ]
+            pass
+        self.prep_list_ff.append(const['manage'])
+
+        try:
             self.prep_num_frames.set(defaults['prep_num_frames'])
         except KeyError:
             self.prep_num_frames.set(1000)
@@ -740,13 +791,18 @@ class Application(tk.Frame):
 
         defaults = dict()
 
-        defaults['prep_text_path']         = self.prep_text_path.get()
-        defaults['prep_num_runs']          = self.prep_num_runs.get()
-        defaults['prep_text_m1']           = self.prep_text_m1.get()
-        defaults['prep_text_m2']           = self.prep_text_m2.get()
-        defaults['prep_text_ff']           = self.prep_text_ff.get()
-        defaults['prep_num_frames']        = self.prep_num_frames.get()
-        defaults['prep_temperature']       = self.prep_temperature.get()
+        defaults['prep_text_path']   = self.prep_text_path.get()
+        defaults['prep_num_runs']    = self.prep_num_runs.get()
+        defaults['prep_text_m1']     = self.prep_text_m1.get()
+        defaults['prep_text_m2']     = self.prep_text_m2.get()
+        defaults['prep_text_ff']     = self.prep_text_ff.get()
+        defaults['prep_num_frames']  = self.prep_num_frames.get()
+        defaults['prep_temperature'] = self.prep_temperature.get()
+
+        defaults['prep_list_ff']     = []
+        for each in self.prep_list_ff:
+            if each != const['manage']:
+                defaults['prep_list_ff'].append(each)
 
         try:
             Config.write_all(self.configdir, defaults)
@@ -801,6 +857,110 @@ class Application(tk.Frame):
 
         print 'Copy tab defaults saved.'
         return
+
+class FFManager(tk.Frame):
+    list_ff = []
+
+    def __init__(self, master):
+        tk.Frame.__init__(self, master)
+        self.grid()
+        self.create_widgets()
+        self.list_ff = []
+
+    def set_list_ff(self, list_ff):
+        self.list_ff = list_ff[:-1]
+
+        try:
+            self.ff_listbox.delete(0, tk.END)
+            for item in self.list_ff:
+                self.ff_listbox.insert(tk.END, item)
+        except AttributeError:
+            print 'self.ff_listbox does not exist yet!'
+
+    def create_widgets(self):
+        barstool_style = ttk.Style()
+        barstool_style.configure('My.TFrame', background = 'white')
+
+        # self.selected = tk.StringVar()
+
+        self.ff_label = tk.Label(
+            self,
+            text = 'Manage Force Fields...'
+        )
+
+        self.ff_label.grid(row = 0, column = 0, columnspan = 3, padx = 6, pady = 4, sticky = tk.W)
+
+        self.ff_listbox = tk.Listbox(
+            self
+        )
+
+        self.ff_listbox.grid(row = 1, column = 0, columnspan = 3, padx = 10, pady = 4, sticky = tk.EW)
+
+        self.add_button = tk.Button(
+            self,
+            text = 'Add',
+            command = self.add_ff
+        )
+
+        self.add_button.grid(row = 2, column = 0, padx = 6, pady = 4, sticky = tk.W)
+
+        self.remove_button = tk.Button(
+            self,
+            text = 'Remove',
+            command = self.remove_ff
+        )
+
+        self.remove_button.grid(row = 2, column = 1, padx = 6, pady = 4, sticky = tk.W)
+
+        self.submit_button = tk.Button(
+            self,
+            text = 'Done',
+            command = self.submit_ff
+        )
+
+        self.submit_button.grid(row = 2, column = 2, padx = 6, pady = 4, sticky = tk.W)
+
+    def add_ff(self):
+        ff_new = ''
+
+        try:
+            ff_file = tkFileDialog.askopenfile(initialdir = const['ffpath'], **FILEOPENOPTIONS)
+        except AttributeError:
+            ff_file = tkFileDialog.askopenfile(**FILEOPENOPTIONS)
+
+        try:
+            ff_new = ff_file.name
+            ff_file.close()
+        except AttributeError:
+            return 0
+        except IOError:
+            pass
+
+        name = BARStool_assemble.BS_get_ff_name(ff_new)
+
+        if name:
+            self.list_ff.append(name)
+            self.list_ff.append(const['manage'])
+            self.set_list_ff(self.list_ff)
+            print 'Added %s to the Force Field list.' % name
+            return 1
+
+        return 0
+
+
+    def remove_ff(self):
+        try:
+            name = self.list_ff[map(int, self.ff_listbox.curselection())[0]]
+            print 'Removed %s from the Force Field list.' % name
+            del self.list_ff[map(int, self.ff_listbox.curselection())[0]]
+            self.list_ff.append('')
+            self.set_list_ff(self.list_ff)
+        except IndexError:
+            print 'No item selected to remove.'
+
+    def submit_ff(self):
+        self.master.master.set_list_ff(self.list_ff)
+        self.master.destroy()
 
 app = Application()
 app.master.title('BARStool')

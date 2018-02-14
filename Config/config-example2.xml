@@ -1,0 +1,8 @@
+<User Name="nickbond">
+    <Field Name="Test" Value="1000"/>
+    <List Name="TestList">
+        <Item Value="1"/>
+        <Item Value="2"/>
+        <Item Value="3"/>
+    </List>
+</User>
