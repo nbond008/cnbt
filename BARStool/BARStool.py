@@ -12,7 +12,7 @@ from Config import Config
 
 const = {
     'manage' : 'Manage...',
-    'ffpath' : '~/'
+    'ffpath' : path.dirname('C:\Program Files (x86)\Accelrys\Materials Studio 5.0\share\Resources\Simulation\ClassicalEnergy\FORCEFIELDS\Standard')
 }
 
 FILEOPENOPTIONS = {
@@ -914,7 +914,7 @@ class FFManager(tk.Frame):
 
         self.submit_button = tk.Button(
             self,
-            text = 'Submit',
+            text = 'Done',
             command = self.submit_ff
         )
 
@@ -931,8 +931,10 @@ class FFManager(tk.Frame):
         try:
             ff_new = ff_file.name
             ff_file.close()
-        except IOError, AttributeError:
+        except AttributeError:
             return 0
+        except IOError:
+            pass
 
         name = BARStool_assemble.BS_get_ff_name(ff_new)
 
@@ -940,15 +942,21 @@ class FFManager(tk.Frame):
             self.list_ff.append(name)
             self.list_ff.append(const['manage'])
             self.set_list_ff(self.list_ff)
+            print 'Added %s to the Force Field list.' % name
             return 1
 
         return 0
 
 
     def remove_ff(self):
-        del self.list_ff[map(int, self.ff_listbox.curselection())[0]]
-        self.list_ff.append('')
-        self.set_list_ff(self.list_ff)
+        try:
+            name = self.list_ff[map(int, self.ff_listbox.curselection())[0]]
+            print 'Removed %s from the Force Field list.' % name
+            del self.list_ff[map(int, self.ff_listbox.curselection())[0]]
+            self.list_ff.append('')
+            self.set_list_ff(self.list_ff)
+        except IndexError:
+            print 'No item selected to remove.'
 
     def submit_ff(self):
         self.master.master.set_list_ff(self.list_ff)
