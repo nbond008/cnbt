@@ -143,6 +143,20 @@ def BS_collect(dest, src, index, m1, m2, c_std, c_out, c_set, c_bar):
 
     return True
 
+# TODO: come up with a more robust regex solution to this
+def BS_get_ff_name(ff):
+    res = {
+        'isolate' : re.compile(r'[^/]*\.off$')
+    }
+
+    try:
+        # print re.search(res['isolate'], ff).group().split('.')[0]
+        return re.search(res['isolate'], ff).group().split('.')[0]
+    except AttributeError:
+        return None
+
+    return None
+
 # __label__ <LANDMARK> : the behind-the-scenes for the behind-the-scenes
 
 def __label__(path, m1, m2):

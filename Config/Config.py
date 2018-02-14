@@ -13,7 +13,7 @@ res = {
     'value'       : re.compile(r'Value=\"[^\"]*\"'),
 
     'quotes'      : re.compile(r'\" '),
-    'end'         : re.compile(r'/.*>$')
+    'end'         : re.compile(r'/[^\"]*>$')
 }
 
 const = {
@@ -89,7 +89,7 @@ class Config(object):
                     u
                 )
                 for k in content[u]:
-                    if isinstance(k, basestring):
+                    if isinstance(content[u][k], (str, unicode)): #not pythonic enough
                         textcontent += '%s<%s %s=\"%s\" %s=\"%s\"/>\n' % (
                             const['tab'],
                             const['field'],
@@ -98,19 +98,40 @@ class Config(object):
                             const['value'],
                             content[u][k]
                         )
-                    else:
-                        textcontent += '%s<%s %s=\"%s\">\n' % (
-                            const['tab'],
-                            const['list'],
-                            const['name'],
-                            content[u][k]
-                        )
-                        for item in k:
-                            print 'p'
 
-                        textcontent += '</%s>\n' % (
-                            const['list']
-                        )
+                    else:
+                        try:
+                            for item in content[u][k]:
+                                pass #check whether this is iterable instead of checking whether it's an int
+
+                            textcontent += '%s<%s %s=\"%s\">\n' % (
+                                const['tab'],
+                                const['list'],
+                                const['name'],
+                                k
+                            )
+                            for item in content[u][k]:
+                                textcontent += '%s%s<%s %s=\"%s\"/>\n' % (
+                                    const['tab'],
+                                    const['tab'],
+                                    const['item'],
+                                    const['value'],
+                                    item
+                                )
+
+                            textcontent += '%s</%s>\n' % (
+                                const['tab'],
+                                const['list']
+                            )
+                        except TypeError:
+                            textcontent += '%s<%s %s=\"%s\" %s=\"%s\"/>\n' % (
+                                const['tab'],
+                                const['field'],
+                                const['name'],
+                                k,
+                                const['value'],
+                                content[u][k]
+                            )
 
                 textcontent += '</%s>\n' % (
                     const['user']
@@ -187,6 +208,3 @@ class Config(object):
         f.close
 
         return content
-
-p = Config.read('/Users/nickbond/research/cnbt/Config/config-example.xml')
-print p
