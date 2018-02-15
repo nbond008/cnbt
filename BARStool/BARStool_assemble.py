@@ -243,6 +243,16 @@ def __edit__(line, fn):
     elif re.search(res['bond'], line):
         split_start = re.split(res['bond'], line)
 
+        if re.search(res['name'], line):
+            split_name = re.split(res['name'], split_start[1])
+
+            return '%s<Bond %s%s%s' % (
+                split_start[0],
+                split_name[0],
+                newname,
+                split_name[1]
+            )
+
         return '%s<Bond %s%s' % (
             split_start[0],
             newname,
