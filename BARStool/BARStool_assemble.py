@@ -116,7 +116,7 @@ def BS_collect(dest, src, index, m1, m2, c_std, c_out, c_set, c_bar):
             # return False
 
     if c_out:
-        out_path = '%s%sLowest Energies%sBARS Script' % (source_path, pathchar)
+        out_path = '%s%sLowest Energies%sBARS Script' % (source_path, pathchar, pathchar)
 
         pair     = [(m1, m1), (m1, m2), (m2, m2)]
         out_src  = ['', '', '']
