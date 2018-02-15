@@ -34,7 +34,7 @@
 ###############################################################################################################
 
 use strict;
-use MaterialsScript qw(:all)
+use MaterialsScript qw(:all);
 
 # Required input parameters:
 my $monomer1 = "4tbs-1";
@@ -53,7 +53,7 @@ for my $pair (@pairs) {
     my $current = $Documents{"$pair.xtd"};
     my $traj    = $Documents{"$pair.xtd"}->Trajectory;
 
-    my $out = $Documents->New("$pair.txt");
+    my $out = Documents->New("$pair.txt");
     $out->ClearContent;
     $out->Append(
         sprintf "%22s, %22s, %22s, %22s, %22s, %22s, %22s\n",
@@ -73,8 +73,13 @@ for my $pair (@pairs) {
         my $copy_frag_1 = $current->SaveAs("./blends_temp_frag_1_$i.xsd");
         my $copy_frag_2 = $current->SaveAs("./blends_temp_frag_2_$i.xsd");
 
-        $copy_frag_1->Atoms("Frag_1")->Fragment->Delete;
-        $copy_frag_2->Atoms("Frag_2")->Fragment->Delete;
+        eval {
+            $copy_frag_1->Atoms("Frag_1")->Fragment->Delete;
+            $copy_frag_2->Atoms("Frag_2")->Fragment->Delete;
+        }; if ($@) {
+            print "$pair.xtd has not been renamed.\n";
+            next;
+        }
 
         my $frag_2_only = $copy_frag_1->SaveAs("./frag_2_only_$i.xsd");
         my $frag_1_only = $copy_frag_2->SaveAs("./frag_1_only_$i.xsd");
@@ -134,7 +139,7 @@ for my $pair (@pairs) {
         ]);
 
         my $results_frag_2      = $forcite_frag_2->GeometryOptimization->Run($frag_2_only);
-        my $Etot_frag_2         = $frag_1_only->PotentialEnergy;
+        my $Etot_frag_2         = $frag_2_only->PotentialEnergy;
         my $avfield_frag_2      = Tools->AtomVolumesSurfaces->Connolly->Calculate($frag_2_only, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
         $avfield_frag_2->IsVisible = "No";
 
