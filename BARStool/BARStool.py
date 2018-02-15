@@ -317,6 +317,14 @@ class Application(tk.Frame):
 
         self.quit_button2.grid(row = 9, column = 2, padx = 6, pady = 25)
 
+        self.unlabel_button = tk.Button(
+            frame_label,
+            text    = 'Unlabel',
+            command = self.unlabel_main
+        )
+
+        self.unlabel_button.grid(row = 10, column = 0, padx = 6, pady = 25)
+
         #Copy tab <LANDMARK>
 
         self.collect_source_path_label = tk.Label(
@@ -590,6 +598,32 @@ class Application(tk.Frame):
 
         while success and (index < self.label_num_runs.get() + 1):
             success = BARStool_assemble.BS_label(
+                self.label_text_path.get(),
+                index,
+                self.label_text_m1.get(),
+                self.label_text_m2.get()
+            )
+
+            index += 1
+
+        print '\nDone!\n'
+
+    def unlabel_main(self):
+        if (self.label_text_path is None or self.label_num_runs is None
+                or self.label_text_m1 is None or self.label_text_m2 is None) \
+            or (self.label_text_path.get() == '' or self.label_text_m1.get() == ''
+                or self.label_text_m2.get() == ''):
+
+            tkMessageBox.showerror('BARStool', 'All inputs are required.')
+            return
+
+        print 'Unlabeling...'
+
+        index   = 1
+        success = True
+
+        while success and (index < self.label_num_runs.get() + 1):
+            success = BARStool_assemble.BS_unlabel(
                 self.label_text_path.get(),
                 index,
                 self.label_text_m1.get(),

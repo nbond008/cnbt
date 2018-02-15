@@ -61,6 +61,26 @@ def BS_label(text_path, index, m1, m2):
 
     return True
 
+def BS_unlabel(text_path, index, m1, m2):
+    path = ''
+    for st in text_path.split(pathchar)[1:len(text_path.split(pathchar))]:
+        path += pathchar + st
+
+    index_paren = ''
+
+    if index > 1:
+        index_paren = ' (%d)' % index
+
+    path += '%s%s Blends Mixing%s%sLowest Energies' % (pathchar, m1, index_paren, pathchar)
+
+    try:
+        __unlabel__(path, m1, m2)
+    except IOError:
+        print 'Path not found: %s' % path
+        return False
+
+    return True
+
 def BS_collect(dest, src, index, m1, m2, c_std, c_out, c_set, c_bar):
     dest_folder = '%s%s%s' % (dest, pathchar, src.split(pathchar)[-1])
 
@@ -166,19 +186,7 @@ def __label__(path, m1, m2):
         '%s%s%s %s.xtd' % (path, pathchar, m2, m2)
     ]
 
-    oldpairs = [
-        '%s%s%s %s-old.xtd' % (path, pathchar, m1, m1),
-        '%s%s%s %s-old.xtd' % (path, pathchar, m1, m2),
-        '%s%s%s %s-old.xtd' % (path, pathchar, m2, m2)
-    ]
-
     print '\nSaving to %s...' % path
-
-    for i in range(3):
-        try:
-            shutil.copy2(pairs[i], oldpairs[i])
-        except (IOError, error):
-            print 'Error copying old xtd.'
 
     for pair in pairs:
         bonds = __get_bonds__(pair)
@@ -208,7 +216,10 @@ def __edit__(line, fn):
         'end'  : re.compile(r'>')
     }
 
-    newname = 'Frag_%d' % fn
+    newname = ''
+
+    if fn > 0:
+        newname = 'Name=\"Frag_%d\"' % fn
 
     if re.search(res['atom'], line):
         split_start = re.split(res['atom'], line)
@@ -216,14 +227,14 @@ def __edit__(line, fn):
         if re.search(res['name'], line):
             split_name = re.split(res['name'], split_start[1])
 
-            return '%s<Atom3d %sName=\"%s\"%s' % (
+            return '%s<Atom3d %s%s%s' % (
                 split_start[0],
                 split_name[0],
                 newname,
                 split_name[1]
             )
 
-        return '%s<Atom3d Name=\"%s\" %s' % (
+        return '%s<Atom3d %s%s' % (
             split_start[0],
             newname,
             split_start[1]
@@ -232,7 +243,7 @@ def __edit__(line, fn):
     elif re.search(res['bond'], line):
         split_start = re.split(res['bond'], line)
 
-        return '%s<Bond Name=\"%s\" %s' % (
+        return '%s<Bond %s%s' % (
             split_start[0],
             newname,
             split_start[1]
@@ -260,7 +271,8 @@ def __get_fn__(line, bonds):
                 return 2
 
             if num != 1:
-                print 'Item %d matches neither molecule.' % num
+                return 0
+                # print 'Item %d matches neither molecule.' % num
 
     except AttributeError:
         pass
@@ -326,6 +338,35 @@ def __get_bonds__(path):
     f.close()
 
     return (frag_1, frag_2)
+
+def __unlabel__(path, m1, m2):
+    pairs = [
+        '%s%s%s %s.xtd' % (path, pathchar, m1, m1),
+        '%s%s%s %s.xtd' % (path, pathchar, m1, m2),
+        '%s%s%s %s.xtd' % (path, pathchar, m2, m2)
+    ]
+
+    print '\nSaving to %s...' % path
+
+    for pair in pairs:
+        bonds = __get_bonds__(pair)
+
+        index = 0
+        contents = ''
+        f = open(pair, 'r')
+        for line in f:
+
+            contents += __edit__(line, -1)
+            index += 1
+
+        f.close()
+
+        f2 = open(pair, 'w')
+
+        f2.write(contents)
+        f2.close()
+
+    return 1
 
 top =\
 '''###############################################################################################################
