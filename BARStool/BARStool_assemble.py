@@ -116,7 +116,7 @@ def BS_collect(dest, src, index, m1, m2, c_std, c_out, c_set, c_bar):
             # return False
 
     if c_out:
-        out_path = '%s%sLowest Energies' % (source_path, pathchar)
+        out_path = '%s%sLowest Energies%sBARS Script' % (source_path, pathchar)
 
         pair     = [(m1, m1), (m1, m2), (m2, m2)]
         out_src  = ['', '', '']
@@ -404,282 +404,137 @@ top =\
 #                                                                                                             #
 ###############################################################################################################
 
+use strict;
+use MaterialsScript qw(:all);
+
 # Required input parameters:
 '''
 
 bottom =\
 '''
-# Optional: The naming convention of the output files can be customized:
-my $outfile1 = "$dir/$monomer1 $monomer1.txt";
-my $outfile2 = "$dir/$monomer1 $monomer2.txt";
-my $outfile3 = "$dir/$monomer2 $monomer2.txt";
+my @pairs = (
+    "$monomer1 $monomer1",
+    "$monomer1 $monomer2",
+    "$monomer2 $monomer2"
+);
 
-use strict;
-use MaterialsScript qw(:all);
-my $doc=$Documents{"$monomer1 $monomer1.xtd"};
-my $trajectory = $Documents{"$monomer1 $monomer1.xtd"}->Trajectory;
-my $fh;
-for (my $i=1; $i<=$numframes; $i=$i+1){
-    $trajectory->CurrentFrame = $i;
-    my $copyDoc_Pair=$doc->SaveAs("./Blends_Traj_Perl_Trial_Pair_Frame_$i.xsd");
-    my $copyDoc_Frag_1=$doc->SaveAs("./Blends_Traj_Perl_Trial_Frag_1_Frame_$i.xsd");
-    my $copyDoc_Frag_2=$doc->SaveAs("./Blends_Traj_Perl_Trial_Frag_2_Frame_$i.xsd");
-    my $Atom_Of_Frag_1 = $copyDoc_Frag_1->Atoms("Frag_1");
-    my $fragment_1 = $Atom_Of_Frag_1->Fragment;
-    my $Atom_Of_Frag_2 = $copyDoc_Frag_2->Atoms("Frag_2");
-    my $fragment_2 = $Atom_Of_Frag_2->Fragment;
-    $fragment_1->Delete;
-    $fragment_2->Delete;
-    my $Frag_2_Only=$copyDoc_Frag_1->SaveAs("./Frag_2_Only_Frame_$i.xsd");
-    my $Frag_1_Only=$copyDoc_Frag_2->SaveAs("./Frag_1_Only_Frame_$i.xsd");
+for my $pair (@pairs) {
+    my $current = $Documents{"$pair.xtd"};
+    my $traj    = $Documents{"$pair.xtd"}->Trajectory;
 
-     my $forcite_Pair= Modules->Forcite;
-     $forcite_Pair->ChangeSettings([
-     Quality => "Fine",
-     CurrentForcefield => "$forcefield",
-     ChargeAssignment => "Use current",MaxIterations=> 5000,
-     WriteLevel => "Silent"]);
+    my $out = Documents->New("$pair.txt");
+    $out->ClearContent;
+    $out->Append(
+        sprintf "%22s, %22s, %22s, %22s, %22s, %22s, %22s\n",
+        "E_Pair (kcal/mol)",
+        "E_Frag_1 (kcal/mol)",
+        "E_Frag_2 (kcal/mol)",
+        "Del_E (kcal/mol)",
+        "CV_Pair (A^3)",
+        "CV_Frag_1 (A^3)",
+        "CV_Frag_2 (A^3)"
+    );
 
-    my $results_Pair = $forcite_Pair->GeometryOptimization->Run($copyDoc_Pair); #Settings is optional parameter for run function
+    for (my $i = 1; $i <= $numframes; $i++) {
+        $traj->CurrentFrame = $i;
 
-    my $Etot_Pair=$copyDoc_Pair->PotentialEnergy;
+        my $copy_pair   = $current->SaveAs("./blends_temp_pair_$i.xsd");
+        my $copy_frag_1 = $current->SaveAs("./blends_temp_frag_1_$i.xsd");
+        my $copy_frag_2 = $current->SaveAs("./blends_temp_frag_2_$i.xsd");
 
-    my $avField_Pair= Tools->AtomVolumesSurfaces->Connolly->Calculate($copyDoc_Pair, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
+        eval {
+            $copy_frag_1->Atoms("Frag_1")->Fragment->Delete;
+            $copy_frag_2->Atoms("Frag_2")->Fragment->Delete;
+        }; if ($@) {
+            print "$pair.xtd has not been renamed.\n";
+            next;
+        }
 
-       $avField_Pair->IsVisible = "No";
-    my $Iso_Surface_Pair=   $avField_Pair->CreateIsosurface([IsoValue => 0,
-                            HasFlippedNormals => "No"]);
-    my $Connolly_Vol_Pair=$Iso_Surface_Pair->EnclosedVolume;
+        my $frag_2_only = $copy_frag_1->SaveAs("./frag_2_only_$i.xsd");
+        my $frag_1_only = $copy_frag_2->SaveAs("./frag_1_only_$i.xsd");
 
-     my $forcite_Frag_1= Modules->Forcite;
-     $forcite_Frag_1->ChangeSettings([
-     Quality => "Fine",
-     CurrentForcefield => "$forcefield",
-     ChargeAssignment => "Use current",MaxIterations=> 5000,WriteLevel => "Silent"]);
+        $copy_frag_1->Close;
+        $copy_frag_1->Delete;
+        $copy_frag_2->Close;
+        $copy_frag_2->Delete;
 
+        my $forcite_pair = Modules->Forcite;
+        $forcite_pair->ChangeSettings([
+            Quality => "Fine",
+            CurrentForcefield => "$forcefield",
+            Temperature => "$temperature",
+            ChargeAssignment => "Use current",
+            MaxIterations => 5000,
+            WriteLevel => "Silent"
+        ]);
 
-    my $results_Frag_1 = $forcite_Frag_1->GeometryOptimization->Run($Frag_1_Only); #Settings is optional parameter for run function
+        my $results_pair      = $forcite_pair->GeometryOptimization->Run($copy_pair);
+        my $Etot_pair         = $copy_pair->PotentialEnergy;
+        my $avfield_pair      = Tools->AtomVolumesSurfaces->Connolly->Calculate($copy_pair, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
+        $avfield_pair->IsVisible = "No";
 
+        my $iso_surface_pair  = $avfield_pair->CreateIsosurface([IsoValue => 0, HasFlippedNormals => "No"]);
+        my $connolly_vol_pair = $iso_surface_pair->EnclosedVolume;
 
-    my $Etot_Frag_1=$Frag_1_Only->PotentialEnergy;
+        $copy_pair->Close;
+        $copy_pair->Delete;
 
-    my $avField_Frag_1= Tools->AtomVolumesSurfaces->Connolly->Calculate($Frag_1_Only, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
+        my $forcite_frag_1 = Modules->Forcite;
+        $forcite_frag_1->ChangeSettings([
+            Quality => "Fine",
+            CurrentForcefield => "$forcefield",
+            Temperature => "$temperature",
+            ChargeAssignment => "Use current",
+            MaxIterations => 5000,
+            WriteLevel => "Silent"
+        ]);
 
-       $avField_Frag_1->IsVisible = "No";
-    my $Iso_Surface_Frag_1=   $avField_Frag_1->CreateIsosurface([IsoValue => 0,
-                            HasFlippedNormals => "No"]);
-    my $Connolly_Vol_Frag_1=$Iso_Surface_Frag_1->EnclosedVolume;
+        my $results_frag_1      = $forcite_frag_1->GeometryOptimization->Run($frag_1_only);
+        my $Etot_frag_1         = $frag_1_only->PotentialEnergy;
+        my $avfield_frag_1      = Tools->AtomVolumesSurfaces->Connolly->Calculate($frag_1_only, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
+        $avfield_frag_1->IsVisible = "No";
 
-     my $forcite_Frag_2= Modules->Forcite;
-     $forcite_Frag_2->ChangeSettings([
-     Quality => "Fine",
-     CurrentForcefield => "$forcefield",
-     ChargeAssignment => "Use current",MaxIterations=> 5000,WriteLevel => "Silent"]);
+        my $iso_surface_frag_1  = $avfield_frag_1->CreateIsosurface([IsoValue => 0, HasFlippedNormals => "No"]);
+        my $connolly_vol_frag_1 = $iso_surface_frag_1->EnclosedVolume;
 
-    my $results_Frag_2 = $forcite_Frag_2->GeometryOptimization->Run($Frag_2_Only); #Settings is optional parameter for run function
+        $frag_1_only->Close;
+        $frag_1_only->Delete;
 
-    #Extract the result: Need to write functionality to print it to a file
-    my $Etot_Frag_2=$Frag_2_Only->PotentialEnergy;
+        my $forcite_frag_2 = Modules->Forcite;
+        $forcite_frag_2->ChangeSettings([
+            Quality => "Fine",
+            CurrentForcefield => "$forcefield",
+            Temperature => "$temperature",
+            ChargeAssignment => "Use current",
+            MaxIterations => 5000,
+            WriteLevel => "Silent"
+        ]);
 
-    my $avField_Frag_2= Tools->AtomVolumesSurfaces->Connolly->Calculate($Frag_2_Only, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
+        my $results_frag_2      = $forcite_frag_2->GeometryOptimization->Run($frag_2_only);
+        my $Etot_frag_2         = $frag_2_only->PotentialEnergy;
+        my $avfield_frag_2      = Tools->AtomVolumesSurfaces->Connolly->Calculate($frag_2_only, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
+        $avfield_frag_2->IsVisible = "No";
 
-       $avField_Frag_2->IsVisible = "No";
-    my $Iso_Surface_Frag_2=   $avField_Frag_2->CreateIsosurface([IsoValue => 0,
-                            HasFlippedNormals => "No"]);
-    my $Connolly_Vol_Frag_2=$Iso_Surface_Frag_2->EnclosedVolume;
+        my $iso_surface_frag_2  = $avfield_frag_2->CreateIsosurface([IsoValue => 0, HasFlippedNormals => "No"]);
+        my $connolly_vol_frag_2 = $iso_surface_frag_2->EnclosedVolume;
 
-  if ($i == 1) {
-  open($fh, '>', $outfile1) or die "File not opened";
+        $frag_2_only->Close;
+        $frag_2_only->Delete;
 
-  printf $fh  "%22s %22s %22s %22s %22s %22s %22s\\n", "E_Pair (kcal/mol),","E_Frag_1 (kcal/mol),","E_Frag_2 (kcal/mol),","Del_E (kcal/mol),","CV_Pair (A^3),","CV_Frag_1 (A^3),","CV_Frag_2 (A^3)";
-
+        $out->Append(
+            sprintf "%22s, %22s, %22s, %22s, %22s, %22s, %22s\n",
+            $Etot_pair,
+            $Etot_frag_1,
+            $Etot_frag_2,
+            $Etot_pair - ($Etot_frag_1 + $Etot_frag_2),
+            $connolly_vol_pair,
+            $connolly_vol_frag_1,
+            $connolly_vol_frag_2
+        );
     }
 
-    my $Del_E=$Etot_Pair-($Etot_Frag_1+$Etot_Frag_2);
-    printf $fh "%22.5f, %22.5f, %22.5f, %22.5f, %22.5f, %22.5f, %22.5f\\n", $Etot_Pair,$Etot_Frag_1,$Etot_Frag_2,$Del_E,$Connolly_Vol_Pair,$Connolly_Vol_Frag_1,$Connolly_Vol_Frag_2;
-
-    $copyDoc_Pair->Delete;
-    $copyDoc_Frag_1->Delete;
-    $copyDoc_Frag_2->Delete;
-    $Frag_1_Only->Delete;
-    $Frag_2_Only->Delete;
+    $out->Close;
 }
 
-my $doc=$Documents{"$monomer1 $monomer2.xtd"};
-my $trajectory = $Documents{"$monomer1 $monomer2.xtd"}->Trajectory;
-my $fh;
-for (my $i=1; $i<=$numframes; $i=$i+1){
-    $trajectory->CurrentFrame = $i;
-    my $copyDoc_Pair=$doc->SaveAs("./Blends_Traj_Perl_Trial_Pair_Frame_$i.xsd");
-    my $copyDoc_Frag_1=$doc->SaveAs("./Blends_Traj_Perl_Trial_Frag_1_Frame_$i.xsd");
-    my $copyDoc_Frag_2=$doc->SaveAs("./Blends_Traj_Perl_Trial_Frag_2_Frame_$i.xsd");
-    my $Atom_Of_Frag_1 = $copyDoc_Frag_1->Atoms("Frag_1");
-    my $fragment_1 = $Atom_Of_Frag_1->Fragment;
-    my $Atom_Of_Frag_2 = $copyDoc_Frag_2->Atoms("Frag_2");
-    my $fragment_2 = $Atom_Of_Frag_2->Fragment;
-    $fragment_1->Delete;
-    $fragment_2->Delete;
-    my $Frag_2_Only=$copyDoc_Frag_1->SaveAs("./Frag_2_Only_Frame_$i.xsd");
-    my $Frag_1_Only=$copyDoc_Frag_2->SaveAs("./Frag_1_Only_Frame_$i.xsd");
-
-     my $forcite_Pair= Modules->Forcite;
-     $forcite_Pair->ChangeSettings([
-     Quality => "Fine",
-     CurrentForcefield => "$forcefield",
-     ChargeAssignment => "Use current",MaxIterations=> 5000,
-     WriteLevel => "Silent"]);
-
-    my $results_Pair = $forcite_Pair->GeometryOptimization->Run($copyDoc_Pair); #Settings is optional parameter for run function
-
-    my $Etot_Pair=$copyDoc_Pair->PotentialEnergy;
-
-    my $avField_Pair= Tools->AtomVolumesSurfaces->Connolly->Calculate($copyDoc_Pair, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
-
-       $avField_Pair->IsVisible = "No";
-    my $Iso_Surface_Pair=   $avField_Pair->CreateIsosurface([IsoValue => 0,
-                            HasFlippedNormals => "No"]);
-    my $Connolly_Vol_Pair=$Iso_Surface_Pair->EnclosedVolume;
-
-     my $forcite_Frag_1= Modules->Forcite;
-     $forcite_Frag_1->ChangeSettings([
-     Quality => "Fine",
-     CurrentForcefield => "$forcefield",
-     ChargeAssignment => "Use current",MaxIterations=> 5000,WriteLevel => "Silent"]);
-
-
-    my $results_Frag_1 = $forcite_Frag_1->GeometryOptimization->Run($Frag_1_Only); #Settings is optional parameter for run function
-
-
-    my $Etot_Frag_1=$Frag_1_Only->PotentialEnergy;
-
-    my $avField_Frag_1= Tools->AtomVolumesSurfaces->Connolly->Calculate($Frag_1_Only, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
-
-       $avField_Frag_1->IsVisible = "No";
-    my $Iso_Surface_Frag_1=   $avField_Frag_1->CreateIsosurface([IsoValue => 0,
-                            HasFlippedNormals => "No"]);
-    my $Connolly_Vol_Frag_1=$Iso_Surface_Frag_1->EnclosedVolume;
-
-     my $forcite_Frag_2= Modules->Forcite;
-     $forcite_Frag_2->ChangeSettings([
-     Quality => "Fine",
-     CurrentForcefield => "$forcefield",
-     ChargeAssignment => "Use current",MaxIterations=> 5000,WriteLevel => "Silent"]);
-
-    my $results_Frag_2 = $forcite_Frag_2->GeometryOptimization->Run($Frag_2_Only); #Settings is optional parameter for run function
-
-    #Extract the result: Need to write functionality to print it to a file
-    my $Etot_Frag_2=$Frag_2_Only->PotentialEnergy;
-
-    my $avField_Frag_2= Tools->AtomVolumesSurfaces->Connolly->Calculate($Frag_2_Only, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
-
-       $avField_Frag_2->IsVisible = "No";
-    my $Iso_Surface_Frag_2=   $avField_Frag_2->CreateIsosurface([IsoValue => 0,
-                            HasFlippedNormals => "No"]);
-    my $Connolly_Vol_Frag_2=$Iso_Surface_Frag_2->EnclosedVolume;
-
-  if ($i == 1) {
-  open($fh, '>', $outfile2) or die "File not opened";
-
-  printf $fh  "%22s %22s %22s %22s %22s %22s %22s\\n", "E_Pair (kcal/mol),","E_Frag_1 (kcal/mol),","E_Frag_2 (kcal/mol),","Del_E (kcal/mol),","CV_Pair (A^3),","CV_Frag_1 (A^3),","CV_Frag_2 (A^3)";
-
-    }
-
-    my $Del_E=$Etot_Pair-($Etot_Frag_1+$Etot_Frag_2);
-    printf $fh "%22.5f, %22.5f, %22.5f, %22.5f, %22.5f, %22.5f, %22.5f\\n", $Etot_Pair,$Etot_Frag_1,$Etot_Frag_2,$Del_E,$Connolly_Vol_Pair,$Connolly_Vol_Frag_1,$Connolly_Vol_Frag_2;
-
-    $copyDoc_Pair->Delete;
-    $copyDoc_Frag_1->Delete;
-    $copyDoc_Frag_2->Delete;
-    $Frag_1_Only->Delete;
-    $Frag_2_Only->Delete;
-}
-
-my $doc=$Documents{"$monomer2 $monomer2.xtd"};
-my $trajectory = $Documents{"$monomer2 $monomer2.xtd"}->Trajectory;
-my $fh;
-for (my $i=1; $i<=$numframes; $i=$i+1){
-    $trajectory->CurrentFrame = $i;
-    my $copyDoc_Pair=$doc->SaveAs("./Blends_Traj_Perl_Trial_Pair_Frame_$i.xsd");
-    my $copyDoc_Frag_1=$doc->SaveAs("./Blends_Traj_Perl_Trial_Frag_1_Frame_$i.xsd");
-    my $copyDoc_Frag_2=$doc->SaveAs("./Blends_Traj_Perl_Trial_Frag_2_Frame_$i.xsd");
-    my $Atom_Of_Frag_1 = $copyDoc_Frag_1->Atoms("Frag_1");
-    my $fragment_1 = $Atom_Of_Frag_1->Fragment;
-    my $Atom_Of_Frag_2 = $copyDoc_Frag_2->Atoms("Frag_2");
-    my $fragment_2 = $Atom_Of_Frag_2->Fragment;
-    $fragment_1->Delete;
-    $fragment_2->Delete;
-    my $Frag_2_Only=$copyDoc_Frag_1->SaveAs("./Frag_2_Only_Frame_$i.xsd");
-    my $Frag_1_Only=$copyDoc_Frag_2->SaveAs("./Frag_1_Only_Frame_$i.xsd");
-
-     my $forcite_Pair= Modules->Forcite;
-     $forcite_Pair->ChangeSettings([
-     Quality => "Fine",
-     CurrentForcefield => "$forcefield",
-     ChargeAssignment => "Use current",MaxIterations=> 5000,
-     WriteLevel => "Silent"]);
-
-    my $results_Pair = $forcite_Pair->GeometryOptimization->Run($copyDoc_Pair); #Settings is optional parameter for run function
-
-    my $Etot_Pair=$copyDoc_Pair->PotentialEnergy;
-
-    my $avField_Pair= Tools->AtomVolumesSurfaces->Connolly->Calculate($copyDoc_Pair, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
-
-       $avField_Pair->IsVisible = "No";
-    my $Iso_Surface_Pair=   $avField_Pair->CreateIsosurface([IsoValue => 0,
-                            HasFlippedNormals => "No"]);
-    my $Connolly_Vol_Pair=$Iso_Surface_Pair->EnclosedVolume;
-
-     my $forcite_Frag_1= Modules->Forcite;
-     $forcite_Frag_1->ChangeSettings([
-     Quality => "Fine",
-     CurrentForcefield => "$forcefield",
-     ChargeAssignment => "Use current",MaxIterations=> 5000,WriteLevel => "Silent"]);
-
-
-    my $results_Frag_1 = $forcite_Frag_1->GeometryOptimization->Run($Frag_1_Only); #Settings is optional parameter for run function
-
-
-    my $Etot_Frag_1=$Frag_1_Only->PotentialEnergy;
-
-    my $avField_Frag_1= Tools->AtomVolumesSurfaces->Connolly->Calculate($Frag_1_Only, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
-
-       $avField_Frag_1->IsVisible = "No";
-    my $Iso_Surface_Frag_1=   $avField_Frag_1->CreateIsosurface([IsoValue => 0,
-                            HasFlippedNormals => "No"]);
-    my $Connolly_Vol_Frag_1=$Iso_Surface_Frag_1->EnclosedVolume;
-
-     my $forcite_Frag_2= Modules->Forcite;
-     $forcite_Frag_2->ChangeSettings([
-     Quality => "Fine",
-     CurrentForcefield => "$forcefield",
-     ChargeAssignment => "Use current",MaxIterations=> 5000,WriteLevel => "Silent"]);
-
-    my $results_Frag_2 = $forcite_Frag_2->GeometryOptimization->Run($Frag_2_Only); #Settings is optional parameter for run function
-
-    #Extract the result: Need to write functionality to print it to a file
-    my $Etot_Frag_2=$Frag_2_Only->PotentialEnergy;
-
-    my $avField_Frag_2= Tools->AtomVolumesSurfaces->Connolly->Calculate($Frag_2_Only, Settings(ConnollyRadius => 1.0, GridInterval => 0.25));
-
-       $avField_Frag_2->IsVisible = "No";
-    my $Iso_Surface_Frag_2=   $avField_Frag_2->CreateIsosurface([IsoValue => 0,
-                            HasFlippedNormals => "No"]);
-    my $Connolly_Vol_Frag_2=$Iso_Surface_Frag_2->EnclosedVolume;
-
-  if ($i == 1) {
-  open($fh, '>', $outfile3) or die "File not opened";
-
-  printf $fh  "%22s %22s %22s %22s %22s %22s %22s\\n", "E_Pair (kcal/mol),","E_Frag_1 (kcal/mol),","E_Frag_2 (kcal/mol),","Del_E (kcal/mol),","CV_Pair (A^3),","CV_Frag_1 (A^3),","CV_Frag_2 (A^3)";
-
-    }
-
-    my $Del_E=$Etot_Pair-($Etot_Frag_1+$Etot_Frag_2);
-    printf $fh "%22.5f, %22.5f, %22.5f, %22.5f, %22.5f, %22.5f, %22.5f\\n", $Etot_Pair,$Etot_Frag_1,$Etot_Frag_2,$Del_E,$Connolly_Vol_Pair,$Connolly_Vol_Frag_1,$Connolly_Vol_Frag_2;
-
-    $copyDoc_Pair->Delete;
-    $copyDoc_Frag_1->Delete;
-    $copyDoc_Frag_2->Delete;
-    $Frag_1_Only->Delete;
-    $Frag_2_Only->Delete;
-}
+exit(0);
 '''

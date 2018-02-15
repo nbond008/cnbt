@@ -37,9 +37,9 @@ use strict;
 use MaterialsScript qw(:all);
 
 # Required input parameters:
-my $monomer1 = "4tbs-1";
-my $monomer2 = "pi-1";
-my $forcefield = "Dreiding";
+my $monomer1 = "";
+my $monomer2 = "";
+my $forcefield = "";
 my $numframes = 1000;
 my $temperature = 298;
 
@@ -93,8 +93,9 @@ for my $pair (@pairs) {
         $forcite_pair->ChangeSettings([
             Quality => "Fine",
             CurrentForcefield => "$forcefield",
+            Temperature => "$temperature",
             ChargeAssignment => "Use current",
-            MaxIterations=> 5000,
+            MaxIterations => 5000,
             WriteLevel => "Silent"
         ]);
 
@@ -113,8 +114,9 @@ for my $pair (@pairs) {
         $forcite_frag_1->ChangeSettings([
             Quality => "Fine",
             CurrentForcefield => "$forcefield",
+            Temperature => "$temperature",
             ChargeAssignment => "Use current",
-            MaxIterations=> 5000,
+            MaxIterations => 5000,
             WriteLevel => "Silent"
         ]);
 
@@ -133,8 +135,9 @@ for my $pair (@pairs) {
         $forcite_frag_2->ChangeSettings([
             Quality => "Fine",
             CurrentForcefield => "$forcefield",
+            Temperature => "$temperature",
             ChargeAssignment => "Use current",
-            MaxIterations=> 5000,
+            MaxIterations => 5000,
             WriteLevel => "Silent"
         ]);
 
