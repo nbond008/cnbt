@@ -77,7 +77,7 @@ for my $pair (@pairs) {
             $copy_frag_1->Atoms("Frag_1")->Fragment->Delete;
             $copy_frag_2->Atoms("Frag_2")->Fragment->Delete;
         }; if ($@) {
-            print "$pair.xtd has not been renamed.\n";
+            print "$pair.xtd has not been labeled.\n";
             next;
         }
 
