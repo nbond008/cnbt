@@ -145,20 +145,20 @@ def BS_collect(dest, src, index, m1, m2, c_std, c_out, c_set, c_bar):
             # return False
 
     if c_bar:
-        bars_source = '%s%sLowest Energies%sBARS.pl' % (source_path, pathchar, pathchar)
+        bars_source = '%s%sLowest Energies%sBARS Script%sBARS.pl' % (source_path, pathchar, pathchar, pathchar)
         bars_dest   = '%s%sLowest Energies%sBARS.pl' % (dest_path, pathchar, pathchar)
 
         try:
             print 'Copying %s to %s...\n' % (bars_source, bars_dest)
             shutil.copy(bars_source, bars_dest)
         except IOError:
-            bars_source = '%s%sLowest Energies%sbars.pl' % (source_path, pathchar, pathchar)
-            bars_dest   = '%s%sLowest Energies%sbars.pl' % (dest_path, pathchar, pathchar)
+            bars_source = '%s%sLowest Energies%sBARS.pl' % (source_path, pathchar, pathchar)
+            bars_dest   = '%s%sLowest Energies%sBARS.pl' % (dest_path, pathchar, pathchar)
 
             try:
                 shutil.copy(bars_source, bars_dest)
             except:
-                print 'File not found: %s' % bars_source
+                print 'File not found: %s' % ('%s%sLowest Energies%sBARS Script%sBARS.pl' % (source_path, pathchar, pathchar, pathchar))
             # return False
 
     return True
@@ -463,9 +463,9 @@ for my $pair (@pairs) {
         my $frag_2_only = $copy_frag_1->SaveAs("./frag_2_only_$i.xsd");
         my $frag_1_only = $copy_frag_2->SaveAs("./frag_1_only_$i.xsd");
 
-        $copy_frag_1->Close;
+        # $copy_frag_1->Close;
         $copy_frag_1->Delete;
-        $copy_frag_2->Close;
+        # $copy_frag_2->Close;
         $copy_frag_2->Delete;
 
         my $forcite_pair = Modules->Forcite;
@@ -486,7 +486,7 @@ for my $pair (@pairs) {
         my $iso_surface_pair  = $avfield_pair->CreateIsosurface([IsoValue => 0, HasFlippedNormals => "No"]);
         my $connolly_vol_pair = $iso_surface_pair->EnclosedVolume;
 
-        $copy_pair->Close;
+        # $copy_pair->Close;
         $copy_pair->Delete;
 
         my $forcite_frag_1 = Modules->Forcite;
@@ -507,7 +507,7 @@ for my $pair (@pairs) {
         my $iso_surface_frag_1  = $avfield_frag_1->CreateIsosurface([IsoValue => 0, HasFlippedNormals => "No"]);
         my $connolly_vol_frag_1 = $iso_surface_frag_1->EnclosedVolume;
 
-        $frag_1_only->Close;
+        # $frag_1_only->Close;
         $frag_1_only->Delete;
 
         my $forcite_frag_2 = Modules->Forcite;
@@ -528,7 +528,7 @@ for my $pair (@pairs) {
         my $iso_surface_frag_2  = $avfield_frag_2->CreateIsosurface([IsoValue => 0, HasFlippedNormals => "No"]);
         my $connolly_vol_frag_2 = $iso_surface_frag_2->EnclosedVolume;
 
-        $frag_2_only->Close;
+        # $frag_2_only->Close;
         $frag_2_only->Delete;
 
         $out->Append(
