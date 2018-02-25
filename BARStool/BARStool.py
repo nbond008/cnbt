@@ -463,7 +463,7 @@ class Application(tk.Frame):
 
         self.to_copy_BARS_label = tk.Label(
             subframe_to_copy,
-            text = 'bars.pl'
+            text = 'BARS.pl'
         )
 
         self.to_copy_BARS_box = tk.Checkbutton(

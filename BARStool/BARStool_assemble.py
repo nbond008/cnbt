@@ -543,7 +543,7 @@ for my $pair (@pairs) {
         );
     }
 
-    $out->Close;
+    $out->Delete;
 }
 
 exit(0);
