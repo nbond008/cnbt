@@ -152,13 +152,7 @@ def BS_collect(dest, src, index, m1, m2, c_std, c_out, c_set, c_bar):
             print 'Copying %s to %s...\n' % (bars_source, bars_dest)
             shutil.copy(bars_source, bars_dest)
         except IOError:
-            bars_source = '%s%sLowest Energies%sBARS.pl' % (source_path, pathchar, pathchar)
-            bars_dest   = '%s%sLowest Energies%sBARS.pl' % (dest_path, pathchar, pathchar)
-
-            try:
-                shutil.copy(bars_source, bars_dest)
-            except:
-                print 'File not found: %s' % ('%s%sLowest Energies%sBARS Script%sBARS.pl' % (source_path, pathchar, pathchar, pathchar))
+            print 'File not found: %s' % ('%s%sLowest Energies%sBARS Script%sBARS.pl' % (source_path, pathchar, pathchar, pathchar))
             # return False
 
     return True
