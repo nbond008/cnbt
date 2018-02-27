@@ -116,7 +116,7 @@ def BS_collect(dest, src, index, m1, m2, c_std, c_out, c_set, c_bar):
             # return False
 
     if c_out:
-        out_path = '%s%sBARS Script' % (source_path, pathchar)
+        out_path = '%s%sLowest Energies' % (source_path, pathchar)
 
         pair     = [(m1, m1), (m1, m2), (m2, m2)]
         out_src  = ['', '', '']
@@ -145,14 +145,14 @@ def BS_collect(dest, src, index, m1, m2, c_std, c_out, c_set, c_bar):
             # return False
 
     if c_bar:
-        bars_source = '%s%sBARS Script%sBARS.pl' % (source_path, pathchar, pathchar)
+        bars_source = '%s%sLowest Energies%sBARS.pl' % (source_path, pathchar, pathchar)
         bars_dest   = '%s%sBARS.pl' % (dest_path, pathchar, pathchar)
 
         try:
             print 'Copying %s to %s...\n' % (bars_source, bars_dest)
             shutil.copy(bars_source, bars_dest)
         except IOError:
-            print 'File not found: %s' % ('%s%sBARS Script%sBARS.pl' % (source_path, pathchar, pathchar))
+            print 'File not found: %s' % ('%s%sLowest Energies%sBARS.pl' % (source_path, pathchar, pathchar))
             # return False
 
     return True
