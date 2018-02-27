@@ -422,8 +422,8 @@ my $outfile2 = "$dir/$monomer1 $monomer2.txt";
 my $outfile3 = "$dir/$monomer2 $monomer2.txt";
 use strict;
 use MaterialsScript qw(:all);
-my $doc=$Documents{"$monomer1 $monomer1-new.xtd"};
-my $trajectory = $Documents{"$monomer1 $monomer1-new.xtd"}->Trajectory;
+my $doc=$Documents{"$monomer1 $monomer1.xtd"};
+my $trajectory = $Documents{"$monomer1 $monomer1.xtd"}->Trajectory;
 my $fh;
 for (my $i=1; $i<=$numframes; $i=$i+1){
     $trajectory->CurrentFrame = $i;
@@ -488,8 +488,8 @@ for (my $i=1; $i<=$numframes; $i=$i+1){
     $Frag_1_Only->Delete;
     $Frag_2_Only->Delete;
 }
-my $doc=$Documents{"$monomer1 $monomer2-new.xtd"};
-my $trajectory = $Documents{"$monomer1 $monomer2-new.xtd"}->Trajectory;
+my $doc=$Documents{"$monomer1 $monomer2.xtd"};
+my $trajectory = $Documents{"$monomer1 $monomer2.xtd"}->Trajectory;
 my $fh;
 for (my $i=1; $i<=$numframes; $i=$i+1){
     $trajectory->CurrentFrame = $i;
@@ -554,8 +554,8 @@ for (my $i=1; $i<=$numframes; $i=$i+1){
     $Frag_1_Only->Delete;
     $Frag_2_Only->Delete;
 }
-my $doc=$Documents{"$monomer2 $monomer2-new.xtd"};
-my $trajectory = $Documents{"$monomer2 $monomer2-new.xtd"}->Trajectory;
+my $doc=$Documents{"$monomer2 $monomer2.xtd"};
+my $trajectory = $Documents{"$monomer2 $monomer2.xtd"}->Trajectory;
 my $fh;
 for (my $i=1; $i<=$numframes; $i=$i+1){
     $trajectory->CurrentFrame = $i;
