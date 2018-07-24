@@ -2,6 +2,7 @@ import re
 import sys
 import math
 from os import path
+import copy
 
 # adding the flag -d displays a little debug text.
 
@@ -181,6 +182,8 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, diagnostic = F
         origin_temp[2] += (c[2] / len(C))
 
     origin = tuple(origin_temp)
+    if diagnostic:
+        print '\norigin at [%0.3f, %0.3f, %0.3f]\n' % origin
 
     A_dist = [0 for i in range(len(A))]
     B_dist = [0 for i in range(len(B))]
@@ -204,6 +207,13 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, diagnostic = F
 
     C_max_radius = max(C_dist)
 
+    C_sorted = copy.deepcopy(C_dist)
+    C_sorted.sort()
+    concs   = [.95, .97, .99, 1.00]
+    indices = [int(i * len(C_dist) - 1) for i in concs]
+
+    C_percent_radius = [C_sorted[i] for i in indices]
+
     for i in range(len(R)):
         R_dist[i] = distance(R[i], origin)
 
@@ -215,7 +225,7 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, diagnostic = F
 
     # the important part
 
-    dr = 0.2
+    dr = 0.02
     r = dr
 
     while r < size[0] and (A_dist or B_dist or C_dist):
@@ -265,25 +275,43 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, diagnostic = F
     C_peak_radius = rs[C_hist.index(max(C_hist))]
 
     R_peak_count = 0
-    R_max_count = 0
+    R_percent_counts = [0 for i in concs]
+    # R_max_count = 0
     for i in range(len(R)):
         R_peak_count += (distance(R[i], origin) <= C_peak_radius)
-        R_max_count  += (distance(R[i], origin) <= C_max_radius)
+        for index in range(len(C_percent_radius)):
+            R_percent_counts[index] += (distance(R[i], origin) <= C_percent_radius[index])
 
-    print '\nC peak radius: %0.3f\nC max radius: %0.3f\n' % (C_peak_radius, C_max_radius)
-
-    print '%d inside peak, %d outside peak' % (R_peak_count, len(R) - R_peak_count)
-    print '%d inside max, %d outside max\n' % (R_max_count, len(R) - R_max_count)
+    print '\nC peak radius: %0.3f' % (C_peak_radius)
+    print '%d inside peak, %d outside peak\n' % (R_peak_count, len(R) - R_peak_count)
 
     inner_volume = math.pi * 4 / 3 * math.pow(C_peak_radius, 3)
-    mid_volume   = math.pi * 4 / 3 * math.pow(C_max_radius, 3)
     total_volume = size[0] * size[1] * size[2]
 
+    percent_volumes = [math.pi * 4 / 3 * math.pow(r, 3) for r in C_percent_radius]
+
     inner_density = R_peak_count / inner_volume
-    mid_density   = R_max_count / mid_volume
     total_density = len(R) / total_volume
 
-    print '%0.6f R/u^3 inside peak\n%0.6f R/u^3 inside max\n%0.6f R/u^3 total' % (inner_density, mid_density, total_density)
+    percent_densities = [R_percent_counts[i] / percent_volumes[i] for i in range(len(percent_volumes))]
+
+    print '%0.6f R/u^3 inside peak\n%0.6f R/u^3 total\n' % (inner_density, total_density)
+
+    print '------\n'
+
+    for i in range(4):
+        print 'radius at %d%% = %0.5f' % (int(concs[i] * 100), C_percent_radius[i])
+
+    print ''
+
+    for i in range(4):
+        print '%d%%: %d inside, %d outside' % (int(concs[i] * 100),
+                                               R_percent_counts[i],
+                                               len(R) - R_percent_counts[i])
+    print ''
+
+    for i in range(4):
+        print '%d%%: %0.6f R/u^3' % (int(concs[i] * 100), percent_densities[i])
 
     fi = open(hist_filename, 'w')
 
