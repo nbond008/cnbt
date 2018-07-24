@@ -74,9 +74,17 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, log_filename, 
 
             try:
                 dispr_temp = dispr_start.search(line).group().split(',')
-                dispr = [float(dispr_temp[0]) + (float(dispr_temp[0]) < 0),
-                         float(dispr_temp[2]) + (float(dispr_temp[0]) < 0),
-                         float(dispr_temp[4]) + (float(dispr_temp[0]) < 0)]
+                dispr = [float(dispr_temp[0]),
+                         float(dispr_temp[2]),
+                         float(dispr_temp[4])]
+
+                for i in range(3):
+                    while dispr[i] > 1:
+                        dispr[i] -= 1
+                    while dispr[i] < 0:
+                        dispr[i] += 1
+
+                print dispr
 
                 if diagnostic:
                     print 'display range: %s' % dispr
@@ -319,8 +327,8 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, log_filename, 
     print '------\n'
 
     for i in range(4):
-        print 'radius at %d%% = %0.5f' % (int(concs[i] * 100), C_percent_radius[i])
-        f_log.write('radius at %d%% = %0.5f\n' % (int(concs[i] * 100), C_percent_radius[i]))
+        print 'radius at %d%% (%d) = %0.5f' % (int(concs[i] * 100), indices[i], C_percent_radius[i])
+        f_log.write('radius at %d%% (%d) = %0.5f\n' % (int(concs[i] * 100), indices[i], C_percent_radius[i]))
 
     print ''
     f_log.write('\n')
