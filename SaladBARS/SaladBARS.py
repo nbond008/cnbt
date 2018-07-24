@@ -13,7 +13,27 @@ def distance(a, b):
         math.pow(a[2] - b[2], 2)
     )
 
-def saladBARS_main(mtd_filename, histogram_filename, xy_filename, diagnostic = False):
+def get_offset(tup, size, offset_magnitude):
+    offset = [0, 0, 0]
+
+    if float(tup[0]) > offset_magnitude[0]:
+        offset[0] = -size[0]
+    # # elif float(tup[0]) < -size[0] + offset_magnitude[0]:
+    # #     offset[0] = size[0]
+    #
+    if float(tup[1]) > offset_magnitude[1]:
+        offset[1] = -size[1]
+    # # elif float(tup[1]) < -size[1] + offset_magnitude[1]:
+    # #     offset[1] = size[1]
+    #
+    if float(tup[2]) > offset_magnitude[2]:
+        offset[2] = -size[2]
+    # # elif float(tup[2]) < -size[2] + offset_magnitude[2]:
+    # #     offset[2] = size[2]
+
+    return offset
+
+def saladBARS_main(mtd_filename, histogram_filename, xy_filename, log_filename, diagnostic = False, coords_filename = ''):
     A = []
     B = []
     C = []
@@ -42,11 +62,15 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, diagnostic = F
 
     p = 0
 
+    # log_string = ''
+    f_log = open(log_filename, 'w')
+
     for line in fi:
         if mms_start.search(line):
             p = int(id_start.search(line).group())
             if diagnostic:
                 print '\nID = %d' % p
+                f_log.write('ID = %d\n' % p)
 
             try:
                 dispr_temp = dispr_start.search(line).group().split(',')
@@ -56,6 +80,7 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, diagnostic = F
 
                 if diagnostic:
                     print 'display range: %s' % dispr
+                    f_log.write('display range: %s\n' % dispr)
 
                 size = [int(xsize_start.search(line).group()),
                         int(ysize_start.search(line).group()),
@@ -63,10 +88,11 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, diagnostic = F
 
                 if diagnostic:
                     print 'size: %s' % size
+                    f_log.write('size: %s\n\n' % size)
 
-                offset_magnitude = [dispr[0] * float(size[0]),
+                offset_magnitude = (dispr[0] * float(size[0]),
                                     dispr[1] * float(size[1]),
-                                    dispr[2] * float(size[2])]
+                                    dispr[2] * float(size[2]))
 
             except AttributeError:
                 pass
@@ -77,6 +103,7 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, diagnostic = F
                     numblocks = len(mmstring) / 2
                     if numblocks > 3:
                         print 'warning: only considering first 3 bead types'
+                        f_log.write('warning: only considering first 3 bead types')
 
                     startbead = 0
                     for i in range(3):
@@ -99,22 +126,7 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, diagnostic = F
                         for i in range(len(ca)):
                             tup = ca[i].split(',')
 
-                            offset = [0, 0, 0]#offset_magnitude
-
-                            if float(tup[0]) > offset_magnitude[0]:
-                                offset[0] = -size[0]
-                            elif float(tup[0]) < -size[0] + offset_magnitude[0]:
-                                offset[0] = size[0]
-
-                            if float(tup[1]) > offset_magnitude[1]:
-                                offset[1] = -size[1]
-                            elif float(tup[1]) < -size[1] + offset_magnitude[1]:
-                                offset[1] = size[1]
-
-                            if float(tup[2]) > offset_magnitude[2]:
-                                offset[2] = -size[2]
-                            elif float(tup[2]) < -size[2] + offset_magnitude[2]:
-                                offset[2] = size[2]
+                            offset = get_offset(tup, size, offset_magnitude)
 
                             if i in rangeA:
                                 A.append((
@@ -146,22 +158,7 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, diagnostic = F
                     cs = coords_start.search(line).group()
                     tup = cs.split(',')
 
-                    offset = [0, 0, 0]#offset_magnitude
-
-                    if float(tup[0]) > offset_magnitude[0]:
-                        offset[0] = -size[0]
-                    elif float(tup[0]) < -size[0] + offset_magnitude[0]:
-                        offset[0] = size[0]
-
-                    if float(tup[1]) > offset_magnitude[1]:
-                        offset[1] = -size[1]
-                    elif float(tup[1]) < -size[1] + offset_magnitude[1]:
-                        offset[1] = size[1]
-
-                    if float(tup[2]) > offset_magnitude[2]:
-                        offset[2] = -size[2]
-                    elif float(tup[2]) < -size[2] + offset_magnitude[2]:
-                        offset[2] = size[2]
+                    offset = get_offset(tup, size, offset_magnitude)
 
                     R.append((
                         float(tup[0]) + offset[0],
@@ -174,6 +171,23 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, diagnostic = F
 
     fi.close()
 
+    if diagnostic:
+        f_coords = open(coords_filename, 'w')
+
+        f_coords.write('A:\n')
+        for a in A:
+            f_coords.write('%0.5f\t%0.5f\t%0.5f\n' % (a[0], a[1], a[2]))
+
+        f_coords.write('\nB:\n')
+        for a in B:
+            f_coords.write('%0.5f\t%0.5f\t%0.5f\n' % (a[0], a[1], a[2]))
+
+        f_coords.write('\nC:\n')
+        for a in C:
+            f_coords.write('%0.5f\t%0.5f\t%0.5f\n' % (a[0], a[1], a[2]))
+
+        f_coords.close()
+
     origin_temp = [0, 0, 0]
 
     for c in C:
@@ -184,6 +198,7 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, diagnostic = F
     origin = tuple(origin_temp)
     if diagnostic:
         print '\norigin at [%0.3f, %0.3f, %0.3f]\n' % origin
+        f_log.write('origin at [%0.3f, %0.3f, %0.3f]\n\n' % origin)
 
     A_dist = [0 for i in range(len(A))]
     B_dist = [0 for i in range(len(B))]
@@ -282,8 +297,11 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, diagnostic = F
         for index in range(len(C_percent_radius)):
             R_percent_counts[index] += (distance(R[i], origin) <= C_percent_radius[index])
 
-    print '\nC peak radius: %0.3f' % (C_peak_radius)
+    print 'C peak radius: %0.3f' % (C_peak_radius)
     print '%d inside peak, %d outside peak\n' % (R_peak_count, len(R) - R_peak_count)
+
+    f_log.write('C peak radius: %0.3f\n' % (C_peak_radius))
+    f_log.write('%d inside peak, %d outside peak\n\n' % (R_peak_count, len(R) - R_peak_count))
 
     inner_volume = math.pi * 4 / 3 * math.pow(C_peak_radius, 3)
     total_volume = size[0] * size[1] * size[2]
@@ -296,22 +314,31 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, diagnostic = F
     percent_densities = [R_percent_counts[i] / percent_volumes[i] for i in range(len(percent_volumes))]
 
     print '%0.6f R/u^3 inside peak\n%0.6f R/u^3 total\n' % (inner_density, total_density)
+    f_log.write('%0.6f R/u^3 inside peak\n%0.6f R/u^3 total\n\n------\n\n' % (inner_density, total_density))
 
     print '------\n'
 
     for i in range(4):
         print 'radius at %d%% = %0.5f' % (int(concs[i] * 100), C_percent_radius[i])
+        f_log.write('radius at %d%% = %0.5f\n' % (int(concs[i] * 100), C_percent_radius[i]))
 
     print ''
+    f_log.write('\n')
 
     for i in range(4):
         print '%d%%: %d inside, %d outside' % (int(concs[i] * 100),
                                                R_percent_counts[i],
                                                len(R) - R_percent_counts[i])
+        f_log.write('%d%%: %d inside, %d outside\n' % (int(concs[i] * 100),
+                                                     R_percent_counts[i],
+                                                     len(R) - R_percent_counts[i]))
+
     print ''
+    f_log.write('\n')
 
     for i in range(4):
         print '%d%%: %0.6f R/u^3' % (int(concs[i] * 100), percent_densities[i])
+        f_log.write('%d%%: %0.6f R/u^3\n' % (int(concs[i] * 100), percent_densities[i]))
 
     fi = open(hist_filename, 'w')
 
@@ -360,11 +387,19 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, diagnostic = F
 
     fi.close()
 
+    f_log.write('\ntotals:\n\n%d A beads\n%d B beads\n%d C beads\n%d R beads\n' % (len(A),
+                                                                             len(B),
+                                                                             len(C),
+                                                                             len(R)))
+
+    f_log.write('mesomolecule string: \"{} {} {} {} {} {}\"'.format(*mmstring))
+    f_log.close()
+
     if diagnostic:
-        print '\ntotals:\n\n%d A beads\n%d B beads\n%d C beads\n%d R beads\n' % (len(A),
-                                                                                 len(B),
-                                                                                 len(C),
-                                                                                 len(R))
+        print '\n------\n\ntotals:\n\n%d A beads\n%d B beads\n%d C beads\n%d R beads\n\n' % (len(A),
+                                                                                             len(B),
+                                                                                             len(C),
+                                                                                             len(R))
 
         print 'mesomolecule string: \"{} {} {} {} {} {}\"'.format(*mmstring)
 
@@ -376,26 +411,35 @@ if __name__ == '__main__':
 
         mtd_filename = path.realpath(sys.argv[1])
 
-        hist_filename = '%s hist.csv' % mtd_filename.split('.mtd')[0]
+        hist_filename = '%s_hist.csv' % mtd_filename.split('.mtd')[0]
         xy_filename   = '%s_xy.csv' % mtd_filename.split('.mtd')[0]
+        log_filename  = '%s.txt' % mtd_filename.split('.mtd')[0]
 
-        saladBARS_main(mtd_filename, hist_filename, xy_filename)
+        saladBARS_main(mtd_filename, hist_filename, xy_filename, log_filename)
     elif len(sys.argv) == 3:
         if sys.argv[1] == '-d':
             mtd_filename = path.realpath(sys.argv[2])
 
             hist_filename = '%s hist.csv' % mtd_filename.split('.mtd')[0]
             xy_filename   = '%s_xy.csv' % mtd_filename.split('.mtd')[0]
+            log_filename  = '%s.txt' % mtd_filename.split('.mtd')[0]
+
+            coords_filename = '%s_coords.txt' % mtd_filename.split('.mtd')[0]
+
         elif sys.argv[2] == '-d':
             mtd_filename = path.realpath(sys.argv[1])
 
             hist_filename = '%s hist.csv' % mtd_filename.split('.mtd')[0]
             xy_filename   = '%s_xy.csv' % mtd_filename.split('.mtd')[0]
+            log_filename  = '%s.txt' % mtd_filename.split('.mtd')[0]
+
+            coords_filename = '%s_coords.txt' % mtd_filename.split('.mtd')[0]
+
         else:
             print 'usage: python SaladBARS.py [-d] filename...'
             sys.exit(0)
 
-        saladBARS_main(mtd_filename, hist_filename, xy_filename, True)
+        saladBARS_main(mtd_filename, hist_filename, xy_filename, log_filename, True, coords_filename)
     else:
         print 'usage: python SaladBARS.py [-d] filename...'
         sys.exit(0)
