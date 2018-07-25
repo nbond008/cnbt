@@ -33,7 +33,10 @@ def get_offset(tup, size, offset_magnitude):
 
     return offset
 
-def saladBARS_main(mtd_filename, histogram_filename, xy_filename, log_filename, diagnostic = False, coords_filename = ''):
+def saladBARS_main(mtd_filename, hist_filename, xy_filename, log_filename, coords_filename, concs, comment = '', diagnostic = False, suppress = False):
+    if diagnostic:
+        suppress = False
+
     A = []
     B = []
     C = []
@@ -57,7 +60,7 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, log_filename, 
     try:
         fi = open(mtd_filename, 'r')
     except IOError:
-        print 'invalid filename: %s\nusage: python rdf.py filename...' % mtd_filename
+        print 'invalid filename: %s\nusage: python SaladBARS.py [-d] filename...' % mtd_filename
         sys.exit(0)
 
     p = 0
@@ -83,8 +86,6 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, log_filename, 
                         dispr[i] -= 1
                     while dispr[i] < 0:
                         dispr[i] += 1
-
-                print dispr
 
                 if diagnostic:
                     print 'display range: %s' % dispr
@@ -179,22 +180,24 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, log_filename, 
 
     fi.close()
 
-    if diagnostic:
-        f_coords = open(coords_filename, 'w')
+    # if diagnostic:
+    f_coords = open(coords_filename, 'w')
 
-        f_coords.write('A:\n')
-        for a in A:
-            f_coords.write('%0.5f\t%0.5f\t%0.5f\n' % (a[0], a[1], a[2]))
+    f_coords.write('%d\n%s\n' % (len(A) + len(B) + len(C) + len(R), comment))
 
-        f_coords.write('\nB:\n')
-        for a in B:
-            f_coords.write('%0.5f\t%0.5f\t%0.5f\n' % (a[0], a[1], a[2]))
+    for a in A:
+        f_coords.write('A\t%0.5f\t%0.5f\t%0.5f\n' % (a[0], a[1], a[2]))
 
-        f_coords.write('\nC:\n')
-        for a in C:
-            f_coords.write('%0.5f\t%0.5f\t%0.5f\n' % (a[0], a[1], a[2]))
+    for a in B:
+        f_coords.write('B\t%0.5f\t%0.5f\t%0.5f\n' % (a[0], a[1], a[2]))
 
-        f_coords.close()
+    for a in C:
+        f_coords.write('C\t%0.5f\t%0.5f\t%0.5f\n' % (a[0], a[1], a[2]))
+
+    for a in R:
+        f_coords.write('R\t%0.5f\t%0.5f\t%0.5f\n' % (a[0], a[1], a[2]))
+
+    f_coords.close()
 
     origin_temp = [0, 0, 0]
 
@@ -232,7 +235,7 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, log_filename, 
 
     C_sorted = copy.deepcopy(C_dist)
     C_sorted.sort()
-    concs   = [.95, .97, .99, 1.00]
+    #concs   = [.95, .97, .99, 1.00]
     indices = [int(i * len(C_dist) - 1) for i in concs]
 
     C_percent_radius = [C_sorted[i] for i in indices]
@@ -248,7 +251,7 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, log_filename, 
 
     # the important part
 
-    dr = 0.02
+    dr = 0.1
     r = dr
 
     while r < size[0] and (A_dist or B_dist or C_dist):
@@ -305,8 +308,9 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, log_filename, 
         for index in range(len(C_percent_radius)):
             R_percent_counts[index] += (distance(R[i], origin) <= C_percent_radius[index])
 
-    print 'C peak radius: %0.3f' % (C_peak_radius)
-    print '%d inside peak, %d outside peak\n' % (R_peak_count, len(R) - R_peak_count)
+    if not suppress:
+        print 'C peak radius: %0.3f' % (C_peak_radius)
+        print '%d inside peak, %d outside peak\n' % (R_peak_count, len(R) - R_peak_count)
 
     f_log.write('C peak radius: %0.3f\n' % (C_peak_radius))
     f_log.write('%d inside peak, %d outside peak\n\n' % (R_peak_count, len(R) - R_peak_count))
@@ -321,31 +325,38 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, log_filename, 
 
     percent_densities = [R_percent_counts[i] / percent_volumes[i] for i in range(len(percent_volumes))]
 
-    print '%0.6f R/u^3 inside peak\n%0.6f R/u^3 total\n' % (inner_density, total_density)
+    if not suppress:
+        print '%0.6f R/u^3 inside peak\n%0.6f R/u^3 total\n' % (inner_density, total_density)
     f_log.write('%0.6f R/u^3 inside peak\n%0.6f R/u^3 total\n\n------\n\n' % (inner_density, total_density))
 
-    print '------\n'
+    if not suppress:
+        print '------\n'
 
     for i in range(4):
-        print 'radius at %d%% (%d) = %0.5f' % (int(concs[i] * 100), indices[i], C_percent_radius[i])
+        if not suppress:
+            print 'radius at %d%% (%d) = %0.5f' % (int(concs[i] * 100), indices[i], C_percent_radius[i])
         f_log.write('radius at %d%% (%d) = %0.5f\n' % (int(concs[i] * 100), indices[i], C_percent_radius[i]))
 
-    print ''
+    if not suppress:
+        print ''
     f_log.write('\n')
 
     for i in range(4):
-        print '%d%%: %d inside, %d outside' % (int(concs[i] * 100),
+        if not suppress:
+            print '%d%%: %d inside, %d outside' % (int(concs[i] * 100),
                                                R_percent_counts[i],
                                                len(R) - R_percent_counts[i])
         f_log.write('%d%%: %d inside, %d outside\n' % (int(concs[i] * 100),
                                                      R_percent_counts[i],
                                                      len(R) - R_percent_counts[i]))
 
-    print ''
+    if not suppress:
+        print ''
     f_log.write('\n')
 
     for i in range(4):
-        print '%d%%: %0.6f R/u^3' % (int(concs[i] * 100), percent_densities[i])
+        if not suppress:
+            print '%d%%: %0.6f R/u^3' % (int(concs[i] * 100), percent_densities[i])
         f_log.write('%d%%: %0.6f R/u^3\n' % (int(concs[i] * 100), percent_densities[i]))
 
     fi = open(hist_filename, 'w')
@@ -411,10 +422,19 @@ def saladBARS_main(mtd_filename, histogram_filename, xy_filename, log_filename, 
 
         print 'mesomolecule string: \"{} {} {} {} {} {}\"'.format(*mmstring)
 
+    return {
+        'conc'    : concs,
+        'radius'  : C_percent_radius,
+        'volume'  : percent_volumes,
+        'count'   : R_percent_counts,
+        'density' : percent_densities
+    }
+
 if __name__ == '__main__':
+    concs = [.95, .97, .99, 1.00]
     if len(sys.argv) == 2:
         if sys.argv[1] == '--help' or sys.argv[1] == '-h':
-            print 'usage: python SaladBARS.py filename...'
+            print  'usage: python SaladBARS.py [-d] filename...'
             sys.exit(0)
 
         mtd_filename = path.realpath(sys.argv[1])
@@ -423,12 +443,14 @@ if __name__ == '__main__':
         xy_filename   = '%s_xy.csv' % mtd_filename.split('.mtd')[0]
         log_filename  = '%s.txt' % mtd_filename.split('.mtd')[0]
 
-        saladBARS_main(mtd_filename, hist_filename, xy_filename, log_filename)
+        coords_filename = '%s_coords.txt' % mtd_filename.split('.mtd')[0]
+
+        saladBARS_main(mtd_filename, hist_filename, xy_filename, log_filename, coords_filename, concs, 'timestep 0')
     elif len(sys.argv) == 3:
         if sys.argv[1] == '-d':
             mtd_filename = path.realpath(sys.argv[2])
 
-            hist_filename = '%s hist.csv' % mtd_filename.split('.mtd')[0]
+            hist_filename = '%s_hist.csv' % mtd_filename.split('.mtd')[0]
             xy_filename   = '%s_xy.csv' % mtd_filename.split('.mtd')[0]
             log_filename  = '%s.txt' % mtd_filename.split('.mtd')[0]
 
@@ -437,7 +459,7 @@ if __name__ == '__main__':
         elif sys.argv[2] == '-d':
             mtd_filename = path.realpath(sys.argv[1])
 
-            hist_filename = '%s hist.csv' % mtd_filename.split('.mtd')[0]
+            hist_filename = '%s_hist.csv' % mtd_filename.split('.mtd')[0]
             xy_filename   = '%s_xy.csv' % mtd_filename.split('.mtd')[0]
             log_filename  = '%s.txt' % mtd_filename.split('.mtd')[0]
 
@@ -447,7 +469,7 @@ if __name__ == '__main__':
             print 'usage: python SaladBARS.py [-d] filename...'
             sys.exit(0)
 
-        saladBARS_main(mtd_filename, hist_filename, xy_filename, log_filename, True, coords_filename)
+        saladBARS_main(mtd_filename, hist_filename, xy_filename, log_filename, coords_filename, concs, 'timestep 0', True)
     else:
         print 'usage: python SaladBARS.py [-d] filename...'
         sys.exit(0)
