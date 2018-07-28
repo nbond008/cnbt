@@ -243,6 +243,19 @@ def saladBARS_main(mtd_filename, hist_filename, xy_filename, log_filename, coord
     for i in range(len(R)):
         R_dist[i] = distance(R[i], origin)
 
+    total_dist = [0 for i in range(len(A) + len(B) + len(C))]
+    for i in range(len(A)):
+        total_dist[i] = A_dist[i]
+    for i in range(len(B)):
+        total_dist[i + len(A)] = B_dist[i]
+    for i in range(len(C)):
+        total_dist[i + len(A) + len(B)] = C_dist[i]
+
+    total_dist.sort()
+
+    indices_tot = [int(i * len(total_dist) - 1) for i in concs]
+    total_percent_radius = [total_dist[i] for i in indices_tot]
+
     A_hist = []
     B_hist = []
     C_hist = []
@@ -302,11 +315,16 @@ def saladBARS_main(mtd_filename, hist_filename, xy_filename, log_filename, coord
 
     R_peak_count = 0
     R_percent_counts = [0 for i in concs]
+    R_total_percent_counts = [0 for i in concs]
+
     # R_max_count = 0
     for i in range(len(R)):
         R_peak_count += (distance(R[i], origin) <= C_peak_radius)
         for index in range(len(C_percent_radius)):
             R_percent_counts[index] += (distance(R[i], origin) <= C_percent_radius[index])
+
+        for index in range(len(total_percent_radius)):
+            R_total_percent_counts[index] += (distance(R[i], origin) <= total_percent_radius[index])
 
     if not suppress:
         print 'C peak radius: %0.3f' % (C_peak_radius)
@@ -316,18 +334,19 @@ def saladBARS_main(mtd_filename, hist_filename, xy_filename, log_filename, coord
     f_log.write('%d inside peak, %d outside peak\n\n' % (R_peak_count, len(R) - R_peak_count))
 
     inner_volume = math.pi * 4 / 3 * math.pow(C_peak_radius, 3)
-    total_volume = size[0] * size[1] * size[2]
+    box_volume = size[0] * size[1] * size[2]
 
     percent_volumes = [math.pi * 4 / 3 * math.pow(r, 3) for r in C_percent_radius]
 
     inner_density = R_peak_count / inner_volume
-    total_density = len(R) / total_volume
+    # total_density = R_peak_count / total_volume
+    box_density = len(R) / box_volume
 
     percent_densities = [R_percent_counts[i] / percent_volumes[i] for i in range(len(percent_volumes))]
 
-    if not suppress:
-        print '%0.6f R/u^3 inside peak\n%0.6f R/u^3 total\n' % (inner_density, total_density)
-    f_log.write('%0.6f R/u^3 inside peak\n%0.6f R/u^3 total\n\n------\n\n' % (inner_density, total_density))
+    # if not suppress:
+    #     print '%0.6f R/u^3 inside peak\n%0.6f R/u^3 total\n' % (inner_density, box_density)
+    # f_log.write('%0.6f R/u^3 inside peak\n%0.6f R/u^3 total\n\n------\n\n' % (inner_density, box_density))
 
     if not suppress:
         print '------\n'
@@ -423,11 +442,13 @@ def saladBARS_main(mtd_filename, hist_filename, xy_filename, log_filename, coord
         print 'mesomolecule string: \"{} {} {} {} {} {}\"'.format(*mmstring)
 
     return {
-        'conc'    : concs,
-        'radius'  : C_percent_radius,
-        'volume'  : percent_volumes,
-        'count'   : R_percent_counts,
-        'density' : percent_densities
+        'conc'       : concs,
+        'radius_C'   : C_percent_radius,
+        'radius_ABC' : total_percent_radius,
+        'volume'     : percent_volumes,
+        'count_C'    : R_percent_counts,
+        'count_ABC'  : R_total_percent_counts,
+        'density'    : percent_densities
     }
 
 if __name__ == '__main__':
