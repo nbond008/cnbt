@@ -401,22 +401,22 @@ def saladBARS_main(mtd_filename, hist_filename, xy_filename, log_filename, coord
 
     for i in range(max(len(A), len(B), len(C))):
         try:
-            a = A[i]
+            a = ['%0.4f' % A[i][0], '%0.4f' % A[i][1]]
         except IndexError:
             a = ['', '']
 
         try:
-            b = B[i]
+            b = ['%0.4f' % B[i][0], '%0.4f' % B[i][1]]
         except IndexError:
             b = ['', '']
 
         try:
-            c = C[i]
+            c = ['%0.4f' % C[i][0], '%0.4f' % C[i][1]]
         except IndexError:
             c = ['', '']
 
         try:
-            fi.write('%d, %0.4f, %0.4f, %0.4f, %0.4f, %0.4f, %0.4f, %0.4f, %0.4f\n' % (
+            fi.write('%d, %s, %s, %s, %s, %s, %s, %0.4f, %0.4f\n' % (
                 i,
                 a[0],
                 a[1],
@@ -428,7 +428,7 @@ def saladBARS_main(mtd_filename, hist_filename, xy_filename, log_filename, coord
                 R[i][1]
             ))
         except IndexError:
-            fi.write('%d, %0.4f, %0.4f, %0.4f, %0.4f, %0.4f, %0.4f\n' % (
+            fi.write('%d, %s, %s, %s, %s, %s, %s\n' % (
                 i,
                 a[0],
                 a[1],
