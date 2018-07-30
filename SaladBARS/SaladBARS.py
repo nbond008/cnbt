@@ -399,28 +399,43 @@ def saladBARS_main(mtd_filename, hist_filename, xy_filename, log_filename, coord
 
     fi.write('i, Ax, Ay, Bx, By, Cx, Cy, Rx, Ry\n')
 
-    for i in range(len(A)):
+    for i in range(max(len(A), len(B), len(C))):
+        try:
+            a = A[i]
+        except IndexError:
+            a = ['', '']
+
+        try:
+            b = B[i]
+        except IndexError:
+            b = ['', '']
+
+        try:
+            c = C[i]
+        except IndexError:
+            c = ['', '']
+
         try:
             fi.write('%d, %0.4f, %0.4f, %0.4f, %0.4f, %0.4f, %0.4f, %0.4f, %0.4f\n' % (
                 i,
-                A[i][0],
-                A[i][1],
-                B[i][0],
-                B[i][1],
-                C[i][0],
-                C[i][1],
+                a[0],
+                a[1],
+                b[0],
+                b[1],
+                c[0],
+                c[1],
                 R[i][0],
                 R[i][1]
             ))
         except IndexError:
             fi.write('%d, %0.4f, %0.4f, %0.4f, %0.4f, %0.4f, %0.4f\n' % (
                 i,
-                A[i][0],
-                A[i][1],
-                B[i][0],
-                B[i][1],
-                C[i][0],
-                C[i][1]
+                a[0],
+                a[1],
+                b[0],
+                b[1],
+                c[0],
+                c[1],
             ))
 
     fi.close()
