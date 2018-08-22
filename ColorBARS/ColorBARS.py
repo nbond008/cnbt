@@ -119,7 +119,7 @@ def colorBARS_config(beadtype):
 
 def print_usage():
     print 'usage: python ColorBARS.py filename timestep OR'
-    print '       python ColorBARS.py filename --remove OR'
+    print '       python ColorBARS.py filename --replace OR'
     print '       python ColorBARS.py --define beadtype'
 
 if __name__ == '__main__':
