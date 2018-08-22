@@ -1,16 +1,34 @@
+from Config import Config
 import re
 import sys
 from os import path
 
-def get_color_string(type):
-    if type is 'A':
-        return '0,0,255,255'
-    if type is 'B':
-        return '255,0,0,255'
-    if type is 'C':
-        return '0,255,0,255'
-    if type is 'R':
-        return '255,255,0,255'
+def read_color_data():
+    configdir = '{}/config.xml'.format(path.dirname(path.realpath(__file__)))
+    try:
+        data = Config.read(configdir)
+        print 'successfully read color data from {}\n'.format(configdir)
+    except IOError:
+        print 'failed to read color data.'
+        print 'creating config.xml with default color values.\n'
+        Config.init(configdir)
+
+        data = {
+            'A' : '0,0,255,255',
+            'B' : '255,0,0,255',
+            'C' : '0,255,0,255',
+            'R' : '255,255,0,255'
+        }
+
+        Config.write_all(configdir, data)
+
+    return data
+
+def get_color_string(type, data):
+    for key in data:
+        if type == key:
+            return data[key]
+
     raise IndexError('color for bead type \"{}\" not set'.format(type))
 
 def colorBARS_main(mtd_filename, timestep):
@@ -23,6 +41,8 @@ def colorBARS_main(mtd_filename, timestep):
     old = open(mtd_filename, 'r')
     new = open(new_filename, 'w')
 
+    color_data = read_color_data()
+
     for line in old:
         try:
             tab   = '\t' * len(mbt_start.search(line).group())
@@ -32,7 +52,7 @@ def colorBARS_main(mtd_filename, timestep):
             print 'found bead of type {}!'.format(type)
 
             try:
-                color_string = get_color_string(type)
+                color_string = get_color_string(type, color_data)
             except IndexError as e:
                 print '    {}'.format(e)
                 color_string = color
@@ -45,19 +65,74 @@ def colorBARS_main(mtd_filename, timestep):
     old.close()
     new.close()
 
-if __name__ == '__main__':
-    if not len(sys.argv) == 3:
-        print 'usage: python ColorBARS.py filename timestep'
-        sys.exit(0)
+def colorBARS_config(beadtype):
+    configdir = '{}/config.xml'.format(path.dirname(path.realpath(__file__)))
+    print configdir
+    try:
+        Config.read(configdir)
+    except IOError:
+        Config.init(configdir)
+        #set defaults
+        data = {
+            'A' : '0,0,255,255',
+            'B' : '255,0,0,255',
+            'C' : '0,255,0,255',
+            'R' : '255,255,0,255'
+        }
+        Config.write_all(configdir, data)
+
+    answer = raw_input('add color data for beadtype \"{}\"? (y/n)\n'.format(beadtype))
+    if not (answer.lower() == 'y' or answer.lower() == 'yes'):
+        return None
+
+    color = [0, 0, 0, 255]
 
     try:
-        colorBARS_main(sys.argv[1], int(sys.argv[2]))
-    except IOError:
-        print 'invalid filename: \"{}\"'.format(sys.argv[1])
-        print 'usage: python ColorBARS.py filename timestep'
-        sys.exit(0)
+        color[0] = int(raw_input('R: ')) % 256
     except ValueError:
-        print 'invalid timestep: \"{}\"'.format(sys.argv[2])
-        print 'usage: python ColorBARS.py filename timestep'
+        return None
+
+    try:
+        color[1] = int(raw_input('G: ')) % 256
+    except ValueError:
+        return None
+
+    try:
+        color[2] = int(raw_input('B: ')) % 256
+    except ValueError:
+        return None
+
+    color_str = '{},{},{},{}'.format(color[0], color[1], color[2], color[3])
+
+    Config.write(configdir, beadtype, color_str)
+
+    return color_str
+
+if __name__ == '__main__':
+    if not len(sys.argv) == 3:
+        print 'usage: python ColorBARS.py filename timestep OR'
+        print 'usage: python ColorBARS.py --define beadtype'
         sys.exit(0)
-    # colorBARS_main('/Users/nickbond/research/dpd_shenanigans/Diblock2.mtd', 69)
+
+    if sys.argv[1] == '--define' or sys.argv[1] == '-d':
+        # try:
+        result = colorBARS_config(sys.argv[2])
+        if result:
+            print 'successfully defined beadtype \"{}\" as color \"{}\"'.format(sys.argv[2], result)
+        else:
+            print 'cancelled'
+        # except Exception:
+        #     print 'cancelled'
+        sys.exit(0)
+
+    else:
+        try:
+            colorBARS_main(sys.argv[1], int(sys.argv[2]))
+        except IOError:
+            print 'invalid filename: \"{}\"'.format(sys.argv[1])
+            print 'usage: python ColorBARS.py filename timestep'
+            sys.exit(0)
+        except ValueError:
+            print 'invalid timestep: \"{}\"'.format(sys.argv[2])
+            print 'usage: python ColorBARS.py filename timestep'
+            sys.exit(0)
