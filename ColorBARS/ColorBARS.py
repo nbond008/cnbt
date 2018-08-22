@@ -2,6 +2,8 @@ from Config import Config
 import re
 import sys
 from os import path
+from os import remove as remove_file
+from os import rename as rename_file
 
 def read_color_data():
     configdir = '{}/config.xml'.format(path.dirname(path.realpath(__file__)))
@@ -29,10 +31,13 @@ def get_color_string(type, data):
         if type == key:
             return data[key]
 
-    raise IndexError('color for bead type \"{}\" not set'.format(type))
+    raise IndexError('color for bead type \"{}\" not set. keeping original color.'.format(type))
 
-def colorBARS_main(mtd_filename, timestep):
-    new_filename = '{}_t{}.mtd'.format(re.split(r'\.mtd', mtd_filename)[0], timestep)
+def colorBARS_main(mtd_filename, timestep, remove = False):
+    if timestep:
+        new_filename = '{}_t{}.mtd'.format(re.split(r'\.mtd', mtd_filename)[0], timestep)
+    else:
+        new_filename = '{}_color.mtd'.format(re.split(r'\.mtd', mtd_filename)[0])
 
     mbt_start = re.compile(r'\s*(?=<MesoBeadType)')
     bead_name = re.compile(r'(?<=BeadName=\")[A-Z]*(?=\")')
@@ -49,7 +54,7 @@ def colorBARS_main(mtd_filename, timestep):
             type  = bead_name.search(line).group()[0]
             color = color_str.search(line).group()[0]
 
-            print 'found bead of type {}!'.format(type)
+            print 'found bead of type {}'.format(type)
 
             try:
                 color_string = get_color_string(type, color_data)
@@ -62,8 +67,12 @@ def colorBARS_main(mtd_filename, timestep):
         except AttributeError:
             new.write(line)
 
-    old.close()
     new.close()
+
+    old.close()
+    if remove and path.exists(mtd_filename):
+        remove_file(mtd_filename)
+        rename_file(new_filename, mtd_filename)
 
 def colorBARS_config(beadtype):
     configdir = '{}/config.xml'.format(path.dirname(path.realpath(__file__)))
@@ -108,10 +117,14 @@ def colorBARS_config(beadtype):
 
     return color_str
 
+def print_usage():
+    print 'usage: python ColorBARS.py filename timestep OR'
+    print '       python ColorBARS.py filename --remove OR'
+    print '       python ColorBARS.py --define beadtype'
+
 if __name__ == '__main__':
     if not len(sys.argv) == 3:
-        print 'usage: python ColorBARS.py filename timestep OR'
-        print 'usage: python ColorBARS.py --define beadtype'
+        print_usage()
         sys.exit(0)
 
     if sys.argv[1] == '--define' or sys.argv[1] == '-d':
@@ -121,8 +134,7 @@ if __name__ == '__main__':
             print 'successfully defined beadtype \"{}\" as color \"{}\"'.format(sys.argv[2], result)
         else:
             print 'cancelled'
-        # except Exception:
-        #     print 'cancelled'
+
         sys.exit(0)
 
     else:
@@ -130,9 +142,17 @@ if __name__ == '__main__':
             colorBARS_main(sys.argv[1], int(sys.argv[2]))
         except IOError:
             print 'invalid filename: \"{}\"'.format(sys.argv[1])
-            print 'usage: python ColorBARS.py filename timestep'
+            print_usage()
             sys.exit(0)
         except ValueError:
-            print 'invalid timestep: \"{}\"'.format(sys.argv[2])
-            print 'usage: python ColorBARS.py filename timestep'
+            if sys.argv[2] == '--replace' or sys.argv[2] == '-r':
+                try:
+                    colorBARS_main(sys.argv[1], None, remove = True)
+                except IOError:
+                    print 'invalid filename: \"{}\"'.format(sys.argv[1])
+                    print_usage()
+                    sys.exit(0)
+            else:
+                print 'invalid timestep: \"{}\"'.format(sys.argv[2])
+                print_usage()
             sys.exit(0)
