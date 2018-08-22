@@ -34,7 +34,7 @@ def colorBARS_main(mtd_filename, timestep):
             try:
                 color_string = get_color_string(type)
             except IndexError as e:
-                print '\t{}'.format(e)
+                print '    {}'.format(e)
                 color_string = color
 
             new_line = '{}<MesoBeadType BeadName=\"{}\" Color=\"{}\"/>\r\n'.format(tab, type, color_string)
@@ -46,4 +46,18 @@ def colorBARS_main(mtd_filename, timestep):
     new.close()
 
 if __name__ == '__main__':
-    colorBARS_main('/Users/nickbond/research/dpd_shenanigans/Diblock2.mtd', 69)
+    if not len(sys.argv) == 3:
+        print 'usage: python ColorBARS.py filename timestep'
+        sys.exit(0)
+
+    try:
+        colorBARS_main(sys.argv[1], int(sys.argv[2]))
+    except IOError:
+        print 'invalid filename: \"{}\"'.format(sys.argv[1])
+        print 'usage: python ColorBARS.py filename timestep'
+        sys.exit(0)
+    except ValueError:
+        print 'invalid timestep: \"{}\"'.format(sys.argv[2])
+        print 'usage: python ColorBARS.py filename timestep'
+        sys.exit(0)
+    # colorBARS_main('/Users/nickbond/research/dpd_shenanigans/Diblock2.mtd', 69)
