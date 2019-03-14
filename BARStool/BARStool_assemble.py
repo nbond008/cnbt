@@ -8,7 +8,7 @@ import re
 pathchar = '/'
 
 def BS_prepare(text_path, index, m1, m2, ff, num_frames, temp):
-    path = ''
+    path = text_path.split(pathchar)[0]
     for st in text_path.split(pathchar)[1:len(text_path.split(pathchar))]:
         path += pathchar + st
 
@@ -42,7 +42,7 @@ def BS_prepare(text_path, index, m1, m2, ff, num_frames, temp):
     return True
 
 def BS_label(text_path, index, m1, m2):
-    path = ''
+    path = text_path.split(pathchar)[0]
     for st in text_path.split(pathchar)[1:len(text_path.split(pathchar))]:
         path += pathchar + st
 
@@ -62,7 +62,7 @@ def BS_label(text_path, index, m1, m2):
     return True
 
 def BS_unlabel(text_path, index, m1, m2):
-    path = ''
+    path = text_path.split(pathchar)[0]
     for st in text_path.split(pathchar)[1:len(text_path.split(pathchar))]:
         path += pathchar + st
 
@@ -82,6 +82,8 @@ def BS_unlabel(text_path, index, m1, m2):
     return True
 
 def BS_collect(dest, src, index, m1, m2, c_std, c_out, c_set, c_bar):
+    if dest.split(pathchar)[-1] == '':
+        dest = dest[:-1]
     dest_folder = '%s%s%s' % (dest, pathchar, src.split(pathchar)[-1])
 
     index_paren = ''
