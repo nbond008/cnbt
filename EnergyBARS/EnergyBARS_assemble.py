@@ -292,10 +292,10 @@ def assemble(is_cvn, fn_std, fn_bb, fn_bs, fn_ss, fn_wb, n1, n2, num_frames = 10
                     cureval['U%d' % row] = raw_array[0]['D%d' % (row - 1)]/raw_array[0]['E%d' % (row - 1)]
                     cureval['V%d' % row] = math.exp(-raw_array[0]['D%d' % (row - 1)] / (temp * 0.00198588))
 
-                    cureval['AE%d' % row] = raw_array[1]['D%d' % (row - 1)]/raw_array[0]['E%d' % (row - 1)]
+                    cureval['AE%d' % row] = raw_array[1]['D%d' % (row - 1)]/raw_array[1]['E%d' % (row - 1)]
                     cureval['AF%d' % row] = math.exp(-raw_array[1]['D%d' % (row - 1)] / (temp * 0.00198588))
 
-                    cureval['AM%d' % row] = raw_array[2]['D%d' % (row - 1)]/raw_array[0]['E%d' % (row - 1)]
+                    cureval['AM%d' % row] = raw_array[2]['D%d' % (row - 1)]/raw_array[2]['E%d' % (row - 1)]
                     cureval['AN%d' % row] = math.exp(-raw_array[2]['D%d' % (row - 1)] / (temp * 0.00198588))
 
                     cureval['N2'] += raw_array[1]['F%d' % (row - 1)] / (n1 * num_frames)

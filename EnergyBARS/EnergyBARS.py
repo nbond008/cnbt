@@ -4,7 +4,7 @@ import tkFileDialog
 import tkMessageBox
 import getpass
 from os import path
-import stx_assemble
+import EnergyBARS_assemble
 from Config import Config
 
 class Application(tk.Frame):
@@ -297,7 +297,7 @@ class Application(tk.Frame):
         if (self.text_path is None or self.text_m1 is None or self.text_m2 is None) \
             or (self.text_path.get() == '' or self.text_m1.get() == '' or self.text_m2.get() == ''):
 
-            tkMessageBox.showerror('STX', 'All inputs are required.')
+            tkMessageBox.showerror('EnergyBARS', 'All inputs are required.')
             return
 
         pathchar = '/'
@@ -308,7 +308,7 @@ class Application(tk.Frame):
         if self.num_runs.get() > 1:
             print('\n------ Starting run 1 ------\n')
 
-        entry = stx_assemble.assemble(
+        entry = EnergyBARS_assemble.assemble(
             self.check_cvn.get(),
             '%s%s%s.std'    % (base, pathchar, self.text_m1.get()),
             '%s%s%s %s.txt' % (base, pathchar, self.text_m1.get(), self.text_m1.get()),
@@ -332,7 +332,7 @@ class Application(tk.Frame):
                 try:
                     wb_paths.append('%s (%d)%s%s %s (%d).xlsx' % (base, i, pathchar, self.text_m1.get(), self.text_m2.get(), i))
 
-                    entries.append(stx_assemble.assemble(
+                    entries.append(EnergyBARS_assemble.assemble(
                         self.check_cvn.get(),
                         '%s (%d)%s%s.std'    % (base, i, pathchar, self.text_m1.get()),
                         '%s (%d)%s%s %s.txt' % (base, i, pathchar, self.text_m1.get(), self.text_m1.get()),
@@ -351,7 +351,7 @@ class Application(tk.Frame):
 
                 except IOError:
                     tkMessageBox.showerror(
-                        'STX',
+                        'EnergyBARS',
                         'Invalid path: %s (%d)' % (base, i)
                     )
 
@@ -361,7 +361,7 @@ class Application(tk.Frame):
                 print('\n------ Master Data Sheet ------\n')
 
                 if self.check_stc.get():
-                    stx_assemble.compile_static(
+                    EnergyBARS_assemble.compile_static(
                         self.check_cvn.get(),
                         entries,
                         '%s%s%s %s.xlsx' % (base, pathchar, self.text_m1.get(), self.text_m2.get()),
@@ -370,7 +370,7 @@ class Application(tk.Frame):
                         self.check_sed.get()
                     )
                 else:
-                    stx_assemble.compile_dynamic(
+                    EnergyBARS_assemble.compile_dynamic(
                         self.check_cvn.get(),
                         wb_paths,
                         entries,
@@ -500,5 +500,5 @@ class Application(tk.Frame):
         return
 
 app = Application()
-app.master.title('STD to XLSX')
+app.master.title('EnergyBARS')
 app.mainloop()
