@@ -1,0 +1,116 @@
+*
+*  Input file for DPD:
+*
+
+quantities
+ beads 4
+ molecules 2
+
+bead
+ name this
+
+bead
+ name is
+
+bead
+ name a
+
+bead
+ name test
+
+interaction
+ repulsion A A 25.0000
+ dissipation A A 4.5000
+ wallrepulsion A 50.0000
+
+interaction
+ repulsion B A 40.0000
+ dissipation B A 4.5000
+
+interaction
+ repulsion C A 45.0000
+ dissipation C A 4.5000
+
+interaction
+ repulsion W A 27.5000
+ dissipation W A 4.5000
+
+interaction
+ repulsion A B 40.0000
+ dissipation A B 4.5000
+
+interaction
+ repulsion B B 25.0000
+ dissipation B B 4.5000
+ wallrepulsion B 50.0000
+
+interaction
+ repulsion C B 40.0000
+ dissipation C B 4.5000
+
+interaction
+ repulsion W B 47.5000
+ dissipation W B 4.5000
+
+interaction
+ repulsion A C 45.0000
+ dissipation A C 4.5000
+
+interaction
+ repulsion B C 40.0000
+ dissipation B C 4.5000
+
+interaction
+ repulsion C C 25.0000
+ dissipation C C 4.5000
+ wallrepulsion C 50.0000
+
+interaction
+ repulsion W C 60.0000
+ dissipation W C 4.5000
+
+interaction
+ repulsion A W 27.5000
+ dissipation A W 4.5000
+
+interaction
+ repulsion B W 47.5000
+ dissipation B W 4.5000
+
+interaction
+ repulsion C W 60.0000
+ dissipation C W 4.5000
+
+interaction
+ repulsion W W 25.0000
+ dissipation W W 4.5000
+ wallrepulsion W 50.0000
+
+molecule
+ name BC__3_5
+ architecture (B 1 [B 3]) 4 (A 1 [A 4]) 18 (C 1 [C 5]) 8
+
+molecule
+ name Solvent
+ architecture W
+
+system
+ name DPD
+ comment Dpd calculation from MatStudio *date: 08-12-2018 18:23:16
+ temperature 1.0000
+ grid 30 30 30 1.0000
+ composition  BC__3_5 0.0500 Solvent 0.9500
+ spring_constant 4.0000
+ density 3.0000
+ shear off 0.2000
+ walls off
+ rngseed 6729667222
+
+simulation_control
+ time_steps 180000
+ time_interval 0.0500
+ restart_frame 10000
+ density_frame 1000
+ sample_spacing 9
+ xyz_frame_multiple 10
+ running_averages_reset off
