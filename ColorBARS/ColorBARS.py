@@ -15,23 +15,25 @@ def detect_species():
     del species_list[:]
     species_dict.clear()
     print('Building species list from '+path.get()+'...')
-    for each in ColorBARS_assemble.species_finder(path.get()):
+    mtd_found, raw_species_list = ColorBARS_assemble.species_finder(path.get())
+    for each in raw_species_list:
         species_list.append(each)
-    if not species_list == []:
+    if mtd_found and not species_list == []:
         species_string = species_list[0]
         for each in species_list[1:]:
             species_string += ', '+each
         print('Species list complete.\n')
         species.set(species_string)
-    else:
+    elif species_list == []:
         print('No species found.\n')
         species.set('')
+    else:
+        print('No .mtd files found. Clicking the Apply Styles button will have no effect.\n')
 
 def manage_species():
     if not species.get() == '':
         del species_elem_list[:]
-        del fieldvis_elem_list[:]
-        del mmolvis_elem_list[:]
+        del vis_elem_list[:]
         del preset_elem_list[:]
         del rgb_elem_list[:]
         del hex_elem_list[:]
@@ -48,29 +50,23 @@ def manage_species():
         specmgr = ttk.Frame(root_specmgr)
         specmgr.grid(column=0, row=0, pady=(1,0), sticky=NSEW)
 
-        visibility_label = ttk.Label(specmgr, text='Visibility')
         color_label = ttk.Label(specmgr, text='Species Color')
-        visibility_label_sep = ttk.Separator(specmgr, orient='horizontal')
         color_label_sep = ttk.Separator(specmgr, orient='horizontal')
 
-        visibility_label.grid(column=1, row=0, columnspan=2)
-        color_label.grid(column=3, row=0, columnspan=3)
-        visibility_label_sep.grid(column=1, row=1, columnspan=2, sticky=EW)
-        color_label_sep.grid(column=3, row=1, columnspan=3, sticky=EW)
+        color_label.grid(column=2, row=0, columnspan=3)
+        color_label_sep.grid(column=2, row=1, columnspan=3, sticky=EW)
 
         name_label = ttk.Label(specmgr, text='Name')
-        fieldvis_label = ttk.Label(specmgr, text='Field')
-        mmolvis_label = ttk.Label(specmgr, text='Bead')
+        visibility_label = ttk.Label(specmgr, text='Visible')
         preset_label = ttk.Label(specmgr, text='Preset')
         rgb_label = ttk.Label(specmgr, text='RGB')
         preview_label = ttk.Label(specmgr, text='Preview')
 
         name_label.grid(column=0, row=2)
-        fieldvis_label.grid(column=1, row=2)
-        mmolvis_label.grid(column=2, row=2)
-        preset_label.grid(column=3, row=2)
-        rgb_label.grid(column=4, row=2)
-        preview_label.grid(column=5, row=2)
+        visibility_label.grid(column=1, row=2)
+        preset_label.grid(column=2, row=2)
+        rgb_label.grid(column=3, row=2)
+        preview_label.grid(column=4, row=2)
         
         header_sep = ttk.Separator(specmgr, orient='horizontal')
         header_sep.grid(column=0, row=3, columnspan=6, ipady=2, sticky=EW)
@@ -79,8 +75,7 @@ def manage_species():
         rows = []
         for i in range(len(species_list)):
             species_elem_list.append(StringVar(value=species_list[i]))
-            fieldvis_elem_list.append(IntVar())
-            mmolvis_elem_list.append(IntVar(value=1))
+            vis_elem_list.append(IntVar(value=1))
             preset_elem_list.append(StringVar(value='Default'))
             rgb_elem_list.append(StringVar(value='240,240,240'))
             hex_elem_list.append(StringVar(value='#f0f0f0'))
@@ -88,51 +83,50 @@ def manage_species():
 
             each = species_list[i]
             if each in species_dict:
-                fieldvis = species_dict[each][0]
-                mmolvis = species_dict[each][1]
-                preset = species_dict[each][2]
-                rgb_val = species_dict[each][3]
-                hex_val = species_dict[each][4]
+                vis = species_dict[each][0]
+                preset = species_dict[each][1]
+                rgb_val = species_dict[each][2]
+                hex_val = species_dict[each][3]
                 
-                fieldvis_elem_list[i].set(fieldvis)
-                mmolvis_elem_list[i].set(mmolvis)
+                vis_elem_list[i].set(vis)
                 preset_elem_list[i].set(preset)
                 rgb_elem_list[i].set(rgb_val)
                 hex_elem_list[i].set(hex_val)
             
             style.configure(style_list[i], background=hex_elem_list[i].get())
 
-            species_elem = ttk.Entry(specmgr, textvariable=species_elem_list[i], state='readonly')
-            fieldvis_elem = ttk.Checkbutton(specmgr, variable=fieldvis_elem_list[i])
-            mmolvis_elem = ttk.Checkbutton(specmgr, variable=mmolvis_elem_list[i])
+            species_elem = ttk.Entry(specmgr, textvariable=species_elem_list[i], width=14, state='readonly')
+            vis_elem = ttk.Checkbutton(specmgr, variable=vis_elem_list[i])
             preset_elem = ttk.Combobox(specmgr, textvariable=preset_elem_list[i], values=(
-                'White',
-                'Pink',
-                'Red',
-                'Orange',
-                'Yellow',
-                'Green',
-                'Cyan',
-                'Blue',
-                'Purple',
-                'Black'
-            ), width=9, state='readonly')
+                                                                                            'White',
+                                                                                            'Pink',
+                                                                                            'Red',
+                                                                                            'Orange',
+                                                                                            'Yellow',
+                                                                                            'Green',
+                                                                                            'Cyan',
+                                                                                            'Blue',
+                                                                                            'Purple',
+                                                                                            'Black'
+                                                                                            ), width=9, state='readonly')
             preset_elem.bind('<<ComboboxSelected>>', preset_select)
-            rgb_elem = ttk.Entry(specmgr, textvariable=rgb_elem_list[i], width=10, state='readonly')
-            preview_elem = ttk.Label(specmgr, width=15, style=style_list[i]) # Revisit later to get border width working
+            rgb_elem = ttk.Entry(specmgr, textvariable=rgb_elem_list[i], width=11, state='readonly')
+            preview_elem = ttk.Label(specmgr, width=14, borderwidth=1, relief='solid', style=style_list[i]) # Revisit later to get border width working
             
             rows.append([
                 species_elem,
-                fieldvis_elem,
-                mmolvis_elem,
+                vis_elem,
                 preset_elem,
                 rgb_elem,
                 preview_elem
             ])
         
-        for row_number in range(len(rows)):
-            for column_number, each in enumerate(rows[row_number]):
-                each.grid(column=column_number, row=row_number+4, sticky=E)
+        for j in range(len(rows)):
+            rows[j][0].grid(column=0, row=j+4, sticky=W)
+            rows[j][1].grid(column=1, row=j+4)
+            rows[j][2].grid(column=2, row=j+4, sticky=W)
+            rows[j][3].grid(column=3, row=j+4, sticky=W)
+            rows[j][4].grid(column=4, row=j+4, sticky=NSEW)
 
         for child in specmgr.winfo_children(): child.grid_configure(padx=4, pady=(0,2))
 
@@ -144,7 +138,7 @@ def manage_species():
         customize.grid(column=0, row=2, sticky=NSEW)
 
         customize_species_label = ttk.Label(customize, text='Customize species color:')
-        customize_species_entry = ttk.Combobox(customize, textvariable=customize_species, values=species_list, state='readonly')
+        customize_species_entry = ttk.Combobox(customize, textvariable=customize_species, values=species_list, width=14, state='readonly')
         choose_color_button = ttk.Button(customize, text='Choose Color', width=12, command=lambda: choose_color(root_specmgr))
 
         customize_species_label.grid(column=0, row=0)
@@ -210,32 +204,25 @@ def close_customize(root_customize):
 
 def set_all_vis():
     for i in range(len(species_list)):
-        fieldvis_elem_list[i].set(1)
-        mmolvis_elem_list[i].set(1)
+        vis_elem_list[i].set(1)
 
 def set_none_vis():
     for i in range(len(species_list)):
-        fieldvis_elem_list[i].set(0)
-        mmolvis_elem_list[i].set(0)
+        vis_elem_list[i].set(0)
 
 def close_specmgr(root_specmgr):
     species_dict.clear()
-    showfield_sum = 0
-    showfield.set(0)
     customize_species.set('')
     for i in range(len(species_list)):
-        species_dict[species_elem_list[i].get()] = [fieldvis_elem_list[i].get(), mmolvis_elem_list[i].get(), preset_elem_list[i].get(), rgb_elem_list[i].get(), hex_elem_list[i].get()]
-        showfield_sum += fieldvis_elem_list[i].get()
-    if not showfield_sum == 0:
-        showfield.set(1)
+        species_dict[species_elem_list[i].get()] = [vis_elem_list[i].get(), preset_elem_list[i].get(), rgb_elem_list[i].get(), hex_elem_list[i].get()]
     root_specmgr.destroy()
 
 def get_box_color():
     color = askcolor()
     if not color == (None,None):
-        boxvis.set(1)
-        fieldcolormode.set('species')
         customboxcolor.set(1)
+        boxvis.set(1)
+        hidespecies.set(1)
         boxcolorrgb.set(str(color[0][0])+','+str(color[0][1])+','+str(color[0][2]))
         boxcolorhex.set(color[1])
         style.configure('Mine.TLabel', background=boxcolorhex.get())
@@ -248,70 +235,87 @@ def vol_select(event):
 
 def dotsize_select(event):
     mmoldispstyle.set('Dot and Line')
-    if int(dotsize2.get()) < int(linesize.get()):
-        linesize.set(dotsize2.get())
+    if int(dotsize2.get()) < int(linewidth.get()):
+        linewidth.set(dotsize2.get())
 
-def linesize_select(event):
+def linewidth_select(event):
     mmoldispstyle.set('Dot and Line')
-    if int(linesize.get()) > int(dotsize2.get()):
-        dotsize2.set(linesize.get())
+    if int(linewidth.get()) > int(dotsize2.get()):
+        dotsize2.set(linewidth.get())
 
 def ballsize_select(event):
     mmoldispstyle.set('Ball and Stick')
-    if float(ballsize.get()) < float(sticksize.get()):
-        sticksize.set(ballsize.get())
+    if float(ballsize.get()) < float(stickradius.get()):
+        stickradius.set(ballsize.get())
 
-def sticksize_select(event):
+def stickradius_select(event):
     mmoldispstyle.set('Ball and Stick')
-    if float(sticksize.get()) > float(ballsize.get()):
-        ballsize.set(sticksize.get())
+    if float(stickradius.get()) > float(ballsize.get()):
+        ballsize.set(stickradius.get())
 
-def toggler():
+def toggler1():
     if customboxcolor.get():
         boxvis.set(1)
-        fieldcolormode.set('species')
+        hidespecies.set(1)
+
+def toggler2():
+    if hidespecies.get():
+        customboxcolor.set(1)
+        boxvis.set(1)
 
 def apply_styles():
     if not species_dict == {}:
 
         # Settings list builder <LANDMARK> <builder>
-        generalsettings_list = [
-                                path.get(),
-                                species_dict
-        ]
-
-        boxsettings_list = [
-                                boxvis.get(),
-                                customboxcolor.get(),
-                                boxcolorrgb.get()
-        ]
-
-        fieldsettings_list = [
-                                showfield.get(),
-                                fieldcolormode.get(),
-                                fielddispstyle.get(),
-                                dotqual.get(),
-                                dotsize.get(),
-                                volqual.get(),
-                                transparency.get()
-        ]
-
-        mmolsettings_list = [
-                                beadvis.get(),
-                                bondvis.get(),
-                                mmoldispstyle.get(),
-                                dotsize2.get(),
-                                linesize.get(),
-                                ballsize.get(),
-                                sticksize.get()
-        ]
-
-        print(generalsettings_list)
-        print(boxsettings_list)
-        print(fieldsettings_list)
-        print(mmolsettings_list)
+        if fieldcolormode.get() == 'fieldval':
+            if fielddispstyle.get() == 'Volume':
+                ms_fieldcolormode = '4097'
+            else:
+                ms_fieldcolormode = '12289'
+        else:
+            ms_fieldcolormode = 'species'
         
-##        mtd_reader(generalsettings_list, boxsettings_list, fieldsettings_list, mmolsettings_list)
+##        generalsettings_list = [
+##                                path.get(),
+##                                species_dict
+##        ]
+##
+##        boxsettings_list = [
+##                                boxvis.get(),
+##                                customboxcolor.get(),
+##                                hidespecies.get(),
+##                                boxcolorrgb.get()
+##        ]
+##
+##        fieldsettings_list = [
+##                                ms_fieldcolormode,
+##                                fielddispstyle.get(),
+##                                dotqual_dict[dotqual.get()],
+##                                dotsize.get(),
+##                                volqual_dict[volqual.get()],
+##                                transparency_dict[transparency.get()]
+##        ]
+##
+##        mmolsettings_list = [
+##                                showbeads.get(),
+##                                showbonds.get(),
+##                                mmoldispstyle.get(),
+##                                dotsize2.get(),
+##                                linewidth.get(),
+##                                ballsize.get(),
+##                                stickradius.get()
+##        ]
+##        
+##        ColorBARS_assemble.mtd_reader(generalsettings_list, boxsettings_list, fieldsettings_list, mmolsettings_list)
+
+        ColorBARS_assemble.mtd_reader(
+            [path.get(), species_dict],
+            [boxvis.get(), customboxcolor.get(), hidespecies.get(), boxcolorrgb.get()],
+            [ms_fieldcolormode, fielddispstyle.get(), dotqual_dict[dotqual.get()], dotsize.get(), volqual_dict[volqual.get()], transparency_dict[transparency.get()]],
+            [showbeads.get(), showbonds.get(), mmoldispstyle.get(), dotsize2.get(), linewidth.get(), ballsize.get(), stickradius.get()]
+        )
+
+        print('Done!\n')
         
     else:
         print('All fields are required.')
@@ -322,10 +326,18 @@ def manage_defaults():
     pass
 
 def program_help():
-    print('Not written yet.\nAsk Connor if you have any questions on the program usage.\n')
+    print('Regarding the "Customize box color" option:')
+    print('Materials Studio is weird, so there\'s not actually a box color attribute in the .mtd file.')
+    print('The box color is controlled by the last visible species that does not have a ShowBox="0" attribute.')
+    print('Because of this, this option requires overriding the field settings of the last species in each .mtd file.')
+    print('That may or may not actually be the last species in the species list, by the way - it\'s complicated.')
+    print('Since the settings of the last species will be overridden, I\'ve included an option to hide that species.')
+    print('It\'s definitely weird, but I hope this clears things up in the short term before I find a better explanation.\n')
+    print('The rest of the Help menu isn\'t written yet.')
+    print('Ask me if you have any other questions on the program usage.\n')
 
 def about_me():
-    print('Not written yet...check back later.\nShouldn\'t you know about the program already, though?')
+    print('Not written yet...check back later.\nI figured that you know about the program already, though.')
 
 root_main = Tk()
 root_main.title('ColorBARS')
@@ -336,27 +348,53 @@ species_list = []
 species_dict = {}
 boxvis = IntVar(value=1)
 customboxcolor = IntVar()
-boxcolorrgb = StringVar(value='240,240,240')
-boxcolorhex = StringVar(value='#F0F0F0')
+hidespecies = IntVar()
+boxcolorrgb = StringVar(value='0,0,0')
+boxcolorhex = StringVar(value='#000000')
 style = ttk.Style()
-style.configure('Mine.TLabel', background='#F0F0F0')
-showfield = IntVar(value=0)
+style.configure('Mine.TLabel', background=boxcolorhex.get())
 fieldcolormode = StringVar(value='fieldval')
-fielddispstyle = StringVar(value='Dots')
+fielddispstyle = StringVar(value='Empty')
 dotqual = StringVar(value='Medium')
+
+dotqual_dict = {
+    'Lowest':   '1',
+    'Low':      '2',
+    'Medium':   '4',
+    'High':     '6',
+    'Highest':  '8'
+}
+
 dotsize = StringVar(value='3')
 volqual = StringVar(value='Medium')
+
+volqual_dict = {
+    'Lowest':   '25',
+    'Low':      '50',
+    'Medium':   '100',
+    'High':     '200',
+    'Highest':  '400'
+}
+
 transparency = StringVar(value='25%')
-beadvis = IntVar(value=1)
-bondvis = IntVar(value=1)
+
+transparency_dict = {
+    '0%':   ',255',
+    '25%':  ',191',
+    '50%':  ',127',
+    '75%':  ',64',
+    '100%': ',0'
+}
+
+showbeads = IntVar(value=1)
+showbonds = IntVar(value=1)
 mmoldispstyle = StringVar(value='Dot and Line')
 dotsize2 = StringVar(value='3')
-linesize = StringVar(value='3')
+linewidth = StringVar(value='3')
 ballsize = StringVar(value='0.1')
-sticksize = StringVar(value='0.1')
+stickradius = StringVar(value='0.1')
 species_elem_list = []
-fieldvis_elem_list = []
-mmolvis_elem_list = []
+vis_elem_list = []
 preset_elem_list = []
 rgb_elem_list = []
 hex_elem_list = []
@@ -414,7 +452,7 @@ generalsettings.grid(column=0, row=0, sticky=NSEW)
 path_label = ttk.Label(generalsettings, text='Parent directory:')
 path_button = ttk.Button(generalsettings, text='Open', width=8, command=getdir)
 path_entry = ttk.Entry(generalsettings, textvariable=path, state='readonly')
-notice1_label = ttk.Label(generalsettings, text='(The parent directory should be the folder containing the DPD parameter and results files.)')
+notice1_label = ttk.Label(generalsettings, text='(Should be the folder containing all associated DPD files.)')
 species_label = ttk.Label(generalsettings, text='Species:')
 species_button = ttk.Button(generalsettings, text='Manage', width=8, command=manage_species)
 species_entry = ttk.Entry(generalsettings, textvariable=species, state='readonly')
@@ -438,21 +476,25 @@ sep1.grid(column=0, row=1, padx=4, pady=(3,0), sticky=EW)
 boxsettings = ttk.Frame(root_main, padding='4 4 4 4')
 boxsettings.grid(column=0, row=2, sticky=NSEW)
 
+box_label = ttk.Label(boxsettings, text='Box settings', font='"Segoe UI" 9 bold')
 boxvis_check = ttk.Checkbutton(boxsettings, text='Show box', variable=boxvis)
-customboxcolor_check = ttk.Checkbutton(boxsettings, text='Custom box color', variable=customboxcolor, command=toggler)
-chooseboxcolor_button = ttk.Button(boxsettings, text='Choose color', width=12, command=get_box_color)
+customboxcolor_check = ttk.Checkbutton(boxsettings, text='Custom color', variable=customboxcolor, command=toggler1)
+chooseboxcolor_button = ttk.Button(boxsettings, text='Choose box color', command=get_box_color)
+hidespecies_check = ttk.Checkbutton(boxsettings, text='Hide modified field species', variable=hidespecies, command=toggler2)
 boxrgb_label = ttk.Label(boxsettings, text='RGB:')
 boxrgb_entry = ttk.Entry(boxsettings, textvariable=boxcolorrgb, width=11, state='readonly')
-showcolor_label = ttk.Label(boxsettings, width=10, style='Mine.TLabel') # Revisit later to get border width working
-notice2_label = ttk.Label(boxsettings, text='(Requires coloring by Species and will change the field color of the last visible species.)')
+showcolor_label = ttk.Label(boxsettings, width=14, borderwidth=1, relief='solid', style='Mine.TLabel') # Revisit later to get border width working
+notice2_label = ttk.Label(boxsettings, text='(Custom box color modifies some settings. For more information, click Help.)')
 
-boxvis_check.grid(column=0, row=0, sticky=W)
-customboxcolor_check.grid(column=1, row=0, sticky=W)
-chooseboxcolor_button.grid(column=2,row=0,sticky=W)
-boxrgb_label.grid(column=3, row=0, sticky=E)
-boxrgb_entry.grid(column=4, row=0, sticky=W)
-showcolor_label.grid(column=5, row=0, sticky=W)
-notice2_label.grid(column=0, row=2, columnspan=6, sticky=W)
+box_label.grid(column=0, row=0, columnspan=2, sticky=W)
+boxvis_check.grid(column=0, row=1, sticky=W)
+customboxcolor_check.grid(column=1, row=1, sticky=W)
+chooseboxcolor_button.grid(column=1,row=2, sticky=W)
+hidespecies_check.grid(column=2, row=1, columnspan=3, sticky=W)
+boxrgb_label.grid(column=2, row=2, sticky=E)
+boxrgb_entry.grid(column=3, row=2, sticky=W)
+showcolor_label.grid(column=4, row=2, sticky=NSEW)
+notice2_label.grid(column=0, row=3, columnspan=6, sticky=W)
 
 for child in boxsettings.winfo_children(): child.grid_configure(padx=4, pady=(0,2))
 
@@ -463,12 +505,12 @@ sep2.grid(column=0, row=3, padx=4, pady=(3,0), sticky=EW)
 fieldsettings = ttk.Frame(root_main, padding='4 4 4 4')
 fieldsettings.grid(column=0, row=4, sticky=NSEW)
 
-field_label = ttk.Label(fieldsettings, text='Field settings')
-showfield_check = ttk.Checkbutton(fieldsettings, text='Show field species', variable=showfield)
+field_label = ttk.Label(fieldsettings, text='Field settings', font='"Segoe UI" 9 bold')
 fieldcolor_label = ttk.Label(fieldsettings, text='Color by:')
 species_radio = ttk.Radiobutton(fieldsettings, text='Species', variable=fieldcolormode, value='species')
 fieldval_radio = ttk.Radiobutton(fieldsettings, text='Field values', variable=fieldcolormode, value='fieldval')
 fielddispstyle_label = ttk.Label(fieldsettings, text='Display style:')
+empty_radio = ttk.Radiobutton(fieldsettings, text='Empty', variable=fielddispstyle, value='Empty')
 dots_radio = ttk.Radiobutton(fieldsettings, text='Dots', variable=fielddispstyle, value='Dots')
 dotqual_label = ttk.Label(fieldsettings, text='Quality:')
 dotqual_menu = ttk.Combobox(fieldsettings, textvariable=dotqual, values=('Lowest','Low','Medium','High','Highest'), width=8, state='readonly')
@@ -485,21 +527,21 @@ transparency_menu = ttk.Combobox(fieldsettings, textvariable=transparency, value
 transparency_menu.bind('<<ComboboxSelected>>', vol_select)
 
 field_label.grid(column=0, row=0, columnspan=2, sticky=W)
-showfield_check.grid(column=0, row=1, sticky=W)
-fieldcolor_label.grid(column=2, row=1, sticky=E)
-species_radio.grid(column=3, row=1, sticky=W)
-fieldval_radio.grid(column=4, row=1, sticky=W)
+fieldcolor_label.grid(column=0, row=1, sticky=W)
+species_radio.grid(column=1, row=1, sticky=W)
+fieldval_radio.grid(column=2, row=1, sticky=W)
 fielddispstyle_label.grid(column=0, row=2, sticky=W)
-dots_radio.grid(column=0, row=3, sticky=W)
-dotqual_label.grid(column=1, row=3, sticky=E)
-dotqual_menu.grid(column=2, row=3, sticky=W)
-dotsize_label.grid(column=3, row=3, sticky=E)
-dotsize_menu.grid(column=4, row=3, sticky=W)
-volume_radio.grid(column=0, row=4, sticky=W)
-volqual_label.grid(column=1, row=4, sticky=E)
-volqual_menu.grid(column=2, row=4, sticky=W)
-transparency_label.grid(column=3, row=4, sticky=E)
-transparency_menu.grid(column=4, row=4, sticky=W)
+empty_radio.grid(column=0, row=3, sticky=W)
+dots_radio.grid(column=0, row=4, sticky=W)
+dotqual_label.grid(column=1, row=4, sticky=E)
+dotqual_menu.grid(column=2, row=4, sticky=W)
+dotsize_label.grid(column=3, row=4, sticky=E)
+dotsize_menu.grid(column=4, row=4, sticky=W)
+volume_radio.grid(column=0, row=5, sticky=W)
+volqual_label.grid(column=1, row=5, sticky=E)
+volqual_menu.grid(column=2, row=5, sticky=W)
+transparency_label.grid(column=3, row=5, sticky=E)
+transparency_menu.grid(column=4, row=5, sticky=W)
 
 for child in fieldsettings.winfo_children(): child.grid_configure(padx=4, pady=(0,2))
 
@@ -510,40 +552,40 @@ sep3.grid(column=0, row=5, padx=4, pady=(3,0), sticky=EW)
 mmolsettings = ttk.Frame(root_main, padding='4 4 4 4')
 mmolsettings.grid(column=0, row=6, sticky=NSEW)
 
-mmol_label = ttk.Label(mmolsettings, text='Mesoscale molecule settings')
-beadvis_check = ttk.Checkbutton(mmolsettings, text='Show beads', variable=beadvis)
-bondvis_check = ttk.Checkbutton(mmolsettings, text='Show bonds', variable=bondvis)
+mmol_label = ttk.Label(mmolsettings, text='Mesoscale molecule settings', font='"Segoe UI" 9 bold')
+showbeads_check = ttk.Checkbutton(mmolsettings, text='Show beads', variable=showbeads)
+showbonds_check = ttk.Checkbutton(mmolsettings, text='Show bonds', variable=showbonds)
 mmoldispstyle_label = ttk.Label(mmolsettings, text='Display style:')
 dotline_radio = ttk.Radiobutton(mmolsettings, text='Dot and line', variable=mmoldispstyle, value='Dot and Line')
 dotsize2_label = ttk.Label(mmolsettings, text='Dot size:')
 dotsize2_menu = ttk.Combobox(mmolsettings, textvariable=dotsize2, values=('1','2','3','4','5','6','7','8','9'), width=8, state='readonly')
 dotsize2_menu.bind('<<ComboboxSelected>>', dotsize_select)
-linesize_label = ttk.Label(mmolsettings, text='Line size:')
-linesize_menu = ttk.Combobox(mmolsettings, textvariable=linesize, values=('1','2','3','4','5','6','7','8','9'), width=8, state='readonly')
-linesize_menu.bind('<<ComboboxSelected>>', linesize_select)
+linewidth_label = ttk.Label(mmolsettings, text='Line width:')
+linewidth_menu = ttk.Combobox(mmolsettings, textvariable=linewidth, values=('1','2','3','4','5','6','7','8','9'), width=8, state='readonly')
+linewidth_menu.bind('<<ComboboxSelected>>', linewidth_select)
 ballstick_radio = ttk.Radiobutton(mmolsettings, text='Ball and stick', variable=mmoldispstyle, value='Ball and Stick')
-ballsize_label = ttk.Label(mmolsettings, text='Ball size:')
+ballsize_label = ttk.Label(mmolsettings, text='Ball radius:')
 ballsize_menu = ttk.Combobox(mmolsettings, textvariable=ballsize, values=('0.05','0.08','0.1','0.12','0.15'), width=8, state='readonly')
 ballsize_menu.bind('<<ComboboxSelected>>', ballsize_select)
-sticksize_label = ttk.Label(mmolsettings, text='Stick size:')
-sticksize_menu = ttk.Combobox(mmolsettings, textvariable=sticksize, values=('0.05','0.08','0.1','0.12','0.15'), width=8, state='readonly')
-sticksize_menu.bind('<<ComboboxSelected>>', sticksize_select)
+stickradius_label = ttk.Label(mmolsettings, text='Stick radius:')
+stickradius_menu = ttk.Combobox(mmolsettings, textvariable=stickradius, values=('0.05','0.08','0.1','0.12','0.15'), width=8, state='readonly')
+stickradius_menu.bind('<<ComboboxSelected>>', stickradius_select)
 notice3_label = ttk.Label(mmolsettings, text='(Ball and stick style is higher quality, but renders more slowly while viewing.)')
 
 mmol_label.grid(column=0, row=0, columnspan=2, sticky=W)
-beadvis_check.grid(column=0, row=1, sticky=W)
-bondvis_check.grid(column=1, row=1, sticky=W)
+showbeads_check.grid(column=0, row=1, sticky=W)
+showbonds_check.grid(column=1, row=1, sticky=W)
 mmoldispstyle_label.grid(column=0, row=2, columnspan=2, sticky=W)
 dotline_radio.grid(column=0, row=3, sticky=W)
 dotsize2_label.grid(column=1, row=3, sticky=E)
 dotsize2_menu.grid(column=2, row=3, sticky=W)
-linesize_label.grid(column=3, row=3, sticky=E)
-linesize_menu.grid(column=4, row=3, sticky=W)
+linewidth_label.grid(column=3, row=3, sticky=E)
+linewidth_menu.grid(column=4, row=3, sticky=W)
 ballstick_radio.grid(column=0, row=4, sticky=W)
 ballsize_label.grid(column=1, row=4, sticky=E)
 ballsize_menu.grid(column=2, row=4, sticky=W)
-sticksize_label.grid(column=3, row=4, sticky=E)
-sticksize_menu.grid(column=4, row=4, sticky=W)
+stickradius_label.grid(column=3, row=4, sticky=E)
+stickradius_menu.grid(column=4, row=4, sticky=W)
 notice3_label.grid(column=0, row=5, columnspan=5, sticky=W)
 
 for child in mmolsettings.winfo_children(): child.grid_configure(padx=4, pady=(0,2))
