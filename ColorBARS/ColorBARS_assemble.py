@@ -31,46 +31,6 @@ def par_reader(p,f):
             line = pfile.readline()
     return s
 
-"""
-
-General settings list contains:
-    0. Path
-    1. Species dictionary
-
-Box settings list contains:
-    0. Box visibility - if 0, need to set ShowBox="0" for all FloatField species
-    1. Custom box color check
-    2. Hide modified species check
-    3. Box color in RGB
-
-Field settings list contains:
-    0. Field color mode, preformatted
-    1. Field display style (Empty, Dots, or Volume), preformatted
-    2. Dot quality, preformatted
-    3. Dot size, preformatted
-    4. Volume quality, preformatted
-    5. Transparency value (alpha, to be concatenated with RGB values from species dictionary), preformatted
-
-Mesoscale molecule settings list contains:
-    0. Bead visibility
-    1. Bond visibility
-    2. Mesoscale molecule display style
-    3. Dot size
-    4. Line width
-    5. Ball size
-    6. Stick radius
-
-Species dictionary definition:
-
-species_dict[species_elem_list[i].get()] = [
-                                                0. Mesoscale molecule visibility
-                                                1. Preset color value (NOT NEEDED)
-                                                2. RGB color value
-                                                3. Hex color value (NOT NEEDED)
-                                            ]
-
-"""
-
 def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings):
     directory = generalsettings[0]
     species = generalsettings[1]
@@ -123,12 +83,3 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings):
                         print('Species '+name+' not found in species list. Some settings were not changed.')
 
                 tree.write(join(path,f))
-
-
-
-
-##                with open('out.mtd','r') as f:
-##                    with open('temp.txt','w') as f2: 
-##                        f2.write("<?xml version='1.0'?>\n<!DOCTYPE XSD []>\n")
-##                        f2.write(f.read())
-##                move('temp.txt','out.mtd')

@@ -274,39 +274,6 @@ def apply_styles():
                 ms_fieldcolormode = '12289'
         else:
             ms_fieldcolormode = 'species'
-        
-##        generalsettings_list = [
-##                                path.get(),
-##                                species_dict
-##        ]
-##
-##        boxsettings_list = [
-##                                boxvis.get(),
-##                                customboxcolor.get(),
-##                                hidespecies.get(),
-##                                boxcolorrgb.get()
-##        ]
-##
-##        fieldsettings_list = [
-##                                ms_fieldcolormode,
-##                                fielddispstyle.get(),
-##                                dotqual_dict[dotqual.get()],
-##                                dotsize.get(),
-##                                volqual_dict[volqual.get()],
-##                                transparency_dict[transparency.get()]
-##        ]
-##
-##        mmolsettings_list = [
-##                                showbeads.get(),
-##                                showbonds.get(),
-##                                mmoldispstyle.get(),
-##                                dotsize2.get(),
-##                                linewidth.get(),
-##                                ballsize.get(),
-##                                stickradius.get()
-##        ]
-##        
-##        ColorBARS_assemble.mtd_reader(generalsettings_list, boxsettings_list, fieldsettings_list, mmolsettings_list)
 
         ColorBARS_assemble.mtd_reader(
             [path.get(), species_dict],
