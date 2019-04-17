@@ -15,20 +15,25 @@ def detect_species():
     del species_list[:]
     species_dict.clear()
     print('Building species list from '+path.get()+'...')
-    mtd_found, raw_species_list = ColorBARS_assemble.species_finder(path.get())
+    raw_species_list, raw_mtd_list = ColorBARS_assemble.species_finder(path.get())
     for each in raw_species_list:
         species_list.append(each)
-    if mtd_found and not species_list == []:
+    for each in raw_mtd_list:
+        mtd_list.append(each)
+
+    if not species_list == [] and not mtd_list == []:
         species_string = species_list[0]
         for each in species_list[1:]:
             species_string += ', '+each
-        print('Species list complete.\n')
         species.set(species_string)
+        print('Species list complete.\n')
     elif species_list == []:
         print('No species found.\n')
         species.set('')
     else:
-        print('No .mtd files found. Clicking the Apply Styles button will have no effect.\n')
+        print('No .mtd files found. Clicking the Apply Styles button will have no effect.')
+        print('Species list cleared.\n')
+        species.set('')
 
 def manage_species():
     if not species.get() == '':
@@ -279,7 +284,8 @@ def apply_styles():
             [path.get(), species_dict],
             [boxvis.get(), customboxcolor.get(), hidespecies.get(), boxcolorrgb.get()],
             [ms_fieldcolormode, fielddispstyle.get(), dotqual_dict[dotqual.get()], dotsize.get(), volqual_dict[volqual.get()], transparency_dict[transparency.get()]],
-            [showbeads.get(), showbonds.get(), mmoldispstyle.get(), dotsize2.get(), linewidth.get(), ballsize.get(), stickradius.get()]
+            [showbeads.get(), showbonds.get(), mmoldispstyle.get(), dotsize2.get(), linewidth.get(), ballsize.get(), stickradius.get()],
+            mtd_list
         )
 
         print('Done!\n')
@@ -313,6 +319,7 @@ path = StringVar()
 species = StringVar()
 species_list = []
 species_dict = {}
+mtd_list = []
 boxvis = IntVar(value=1)
 customboxcolor = IntVar()
 hidespecies = IntVar()
