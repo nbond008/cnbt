@@ -1,8 +1,6 @@
 from os import walk
 from os.path import join
 import xml.etree.ElementTree as ET
-##from shutil import move
-import time
 
 def species_finder(directory):
     species = []
@@ -34,16 +32,15 @@ def par_reader(f):
     return s
 
 def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_list):
-    time1 = time.time()
-    directory = generalsettings[0]
+    common_path = len(generalsettings[0])
     species = generalsettings[1]
-    print('\nApplying styles...')
+    print('Applying styles...')
+    progress = 1
     for f in mtd_list:
-        print('   Modifying '+f+'...')
+        print('   Modifying (...)\\'+f[common_path:]+'...')
         tree = ET.parse(f)
-        root = tree.getroot()
 
-        for each in root.iter('FloatField'):
+        for each in tree.findall('./MesoTreeRoot/FloatField'):
             rawname = each.get('Name')
             name = rawname.split()
             if name[0] in species:
@@ -64,7 +61,7 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_li
             if boxsettings[2]:
                 each.set('DisplayStyle', 'Empty')
 
-        for each in root.iter('MesoMoleculeSet'):
+        for each in tree.findall('./MesoTreeRoot/MesoMoleculeSet'):
             each.set('ShowBeads', str(mmolsettings[0]))
             each.set('ShowBonds', str(mmolsettings[1]))
             each.set('ColorMode', '12289')
@@ -74,7 +71,7 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_li
             each.set('BallSize', str(mmolsettings[5]))
             each.set('StickRadius', str(mmolsettings[6]))
 
-        for each in root.iter('MesoBeadType'):
+        for each in tree.findall('./MesoTreeRoot/MesoMoleculeSet/MesoBeadType'):
             name = each.get('BeadName')
             if name in species:
                 each.set('Color', str(species[name][2] + ',255'))
@@ -83,5 +80,6 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_li
                 print('Species '+name+' not found in species list. Some settings were not changed.')
 
         tree.write(f)
-    time2 = time.time()
-    print(time2-time1)
+
+        print('\n--- File completed. Progress: '+str(100*progress/len(mtd_list))+'% ---\n')
+        progress += 1
