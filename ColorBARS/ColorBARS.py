@@ -13,8 +13,11 @@ def getdir():
 
 def detect_species():
     del species_list[:]
+    del mtd_list[:]
+    plural = 's'
     species_dict.clear()
-    print('Building species list from '+path.get()+'...')
+    print('Detecting species and building .mtd list from '+path.get()+'...')
+    print('(Depending on your directory size, this may take a little while.)')
     raw_species_list, raw_mtd_list = ColorBARS_assemble.species_finder(path.get())
     for each in raw_species_list:
         species_list.append(each)
@@ -26,7 +29,9 @@ def detect_species():
         for each in species_list[1:]:
             species_string += ', '+each
         species.set(species_string)
-        print('Species list complete.\n')
+        if len(mtd_list) == 1:
+            plural = ''
+        print('Species list complete. ' + str(len(mtd_list)) + ' .mtd file' + plural + ' found.\n')
     elif species_list == []:
         print('No species found.\n')
         species.set('')
