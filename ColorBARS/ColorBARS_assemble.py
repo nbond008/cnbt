@@ -2,7 +2,7 @@ from os import walk
 from os.path import join
 from time import time
 from math import ceil
-import xml.etree.ElementTree as ET
+import xml.etree.cElementTree as ET
 
 def species_finder(directory):
     species = []
@@ -107,7 +107,7 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_li
                 tens = '0'
             else:
                 tens = ''
-            print('\n--- File completed. Progress: ' + str(decade) + '% Estimated time remaining: ' + minutes + ':' + tens + str(seconds) + ' ---\n')
+            print('\n--- Progress: ' + str(decade) + '% Estimated time remaining: ' + minutes + ':' + tens + str(seconds) + ' ---\n')
 
         elif progress == len(mtd_list):
             t = time()-t0
@@ -128,6 +128,3 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_li
                     print(' ** (...)' + each[common_path:])
                 print('\n ** Before applying styles, all files must have been opened at least once.')
                 print(' ** See the File Open Error section in Help for further information.\n')
-
-        else:
-            print('\n--- File completed. ---\n')

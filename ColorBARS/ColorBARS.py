@@ -31,7 +31,7 @@ def detect_species():
         species.set(species_string)
         if len(mtd_list) == 1:
             plural = ''
-        print('Species list complete. ' + str(len(mtd_list)) + ' .mtd file' + plural + ' found.\n')
+        print('Species list complete with ' + str(len(mtd_list)) + ' .mtd file' + plural + ' found.\n')
     elif species_list == []:
         print('No species found.\n')
         species.set('')
