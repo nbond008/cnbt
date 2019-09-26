@@ -84,6 +84,7 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_li
                 each.set('LineWidth', str(mmolsettings[4]))
                 each.set('BallSize', str(mmolsettings[5]))
                 each.set('StickRadius', str(mmolsettings[6]))
+                each.set('Visible',str(mmolsettings[0] or mmolsettings[1]))
 
             for each in mesobeadtype_list:
                 name = each.get('BeadName')

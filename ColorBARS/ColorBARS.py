@@ -33,10 +33,10 @@ def detect_species():
             plural = ''
         print('Species list complete with ' + str(len(mtd_list)) + ' .mtd file' + plural + ' found.\n')
     elif species_list == []:
-        print('No species found.\n')
+        print('No parameter (.Dpd_par) files found.\n')
         species.set('')
     else:
-        print('No .mtd files found. Clicking the Apply Styles button will have no effect.')
+        print('No results (.mtd) files found. Clicking the Apply Styles button will have no effect.')
         print('Species list cleared.\n')
         species.set('')
 
