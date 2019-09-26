@@ -60,13 +60,14 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_li
                     each.set('ShowBox', str(boxsettings[0]))
                     if not fieldsettings[0] == 'species':
                         each.set('ColorMode', str(fieldsettings[0]))
-                    elif 'ColorMode' in each:
-                        del each['ColorMode']
+                    elif not each.get('ColorMode') == None:
+                        del each.attrib['ColorMode']
                     each.set('DisplayStyle', str(fieldsettings[1]))
                     each.set('DotQuality', str(fieldsettings[2]))
                     each.set('DotSize', str(fieldsettings[3]))
                     each.set('VolumeQuality', str(fieldsettings[4]))
                     each.set('Color', str(species[name[0]][2] + fieldsettings[5]))
+                    each.set('Visible', str(species[name[0]][0]))
                 else:
                     print('Species '+name[0]+' not found in species list. Some settings were not changed.')
             if boxsettings[1]:
