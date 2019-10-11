@@ -402,8 +402,8 @@ top =\
 #  The same forcefield that was used in Forcite/Blends should be used here.                                   #
 #                                                                                                             #
 #      Principal credit for the development of this script goes to Parveen Sood, a now-graduated student of   #
-#  CNBT Lab at the Georgia Institute of Technology under Seung Soon Jang. Additional credit goes to Nicholas  #
-#  Bond, an undergraduate researcher in CNBT Lab, for extensive script functionality improvements.            #
+#  CNBT Lab at the Georgia Institute of Technology under Seung Soon Jang. Additional credit goes to Vivian    #
+#  Bond, a now-graduated researcher in CNBT Lab, for extensive script functionality improvements.             #
 #                                                                                                             #
 #  Copyright 2016 CNBT Lab. All rights reserved. Please use only with permission. If you believe you were     #
 #  sent this file in error, please delete it and contact the sender.                                          #
