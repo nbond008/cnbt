@@ -36,6 +36,7 @@ def par_reader(f):
 def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_list):
     common_path = len(generalsettings[0])
     species = generalsettings[1]
+    
     print('\n--- Applying styles to '+str(len(mtd_list))+' .mtd files... ---')
     progress = 0
     decade = 0
@@ -47,12 +48,8 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_li
 
         floatfield_list = tree.findall('./MesoTreeRoot/FloatField')
         mesomoleculeset_list = tree.findall('./MesoTreeRoot/MesoMoleculeSet')
-        mesobeadtype_list = tree.findall('./MesoTreeRoot/MesoMoleculeSet/MesoBeadType')
 
-        if floatfield_list == [] or mesomoleculeset_list == [] or mesobeadtype_list == []:
-            error_files.append(f)
-            
-        else:
+        if not (floatfield_list == [] or mesomoleculeset_list == []):
             for each in floatfield_list:
                 rawname = each.get('Name')
                 name = rawname.split()
@@ -66,7 +63,7 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_li
                     each.set('DotQuality', str(fieldsettings[2]))
                     each.set('DotSize', str(fieldsettings[3]))
                     each.set('VolumeQuality', str(fieldsettings[4]))
-                    each.set('Color', str(species[name[0]][2] + fieldsettings[5]))
+                    each.set('Color', str(species[name[0]][3] + fieldsettings[5]))
                     each.set('Visible', str(species[name[0]][0]))
                 else:
                     print('Species '+name[0]+' not found in species list. Some settings were not changed.')
@@ -76,6 +73,10 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_li
                     each.set('Visible','1')
                     each.set('DisplayStyle', 'Empty')
 
+            xcoords = []
+            ycoords = []
+            zcoords = []
+            
             for each in mesomoleculeset_list:
                 each.set('ShowBeads', str(mmolsettings[0]))
                 each.set('ShowBonds', str(mmolsettings[1]))
@@ -87,15 +88,36 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_li
                 each.set('StickRadius', str(mmolsettings[6]))
                 each.set('Visible',str(mmolsettings[0] or mmolsettings[1]))
 
-            for each in mesobeadtype_list:
-                name = each.get('BeadName')
-                if name in species:
-                    each.set('Color', str(species[name][2] + ',255'))
-                    each.set('Visible', str(species[name][0]))
-                else:
-                    print('Species '+name+' not found in species list. Some settings were not changed.')
+                solvcheck = 0
+                mesobeadtype_list = each.findall('./MesoBeadType')
+                for eachtype in mesobeadtype_list:
+                    name = eachtype.get('BeadName')
+                    if name in species:
+                        eachtype.set('Color', str(species[name][3] + ',255'))
+                        eachtype.set('Visible', str(species[name][0]))
+                        solvcheck += species[name][1]
+                    else:
+                        print('Species '+name+' not found in species list. Some settings were not changed.')
 
+                if boxsettings[4] and solvcheck == 0:
+                    xyz = getcoords(each)
+                    xcoords.extend(xyz[0])
+                    ycoords.extend(xyz[1])
+                    zcoords.extend(xyz[2])
+                
+                elif boxsettings[4] and not solvcheck == int(each.get('NumberBeadTypes')):
+                    print('Mesomolecule '+each.get('Name')+' has mixed solvent and non-solvent beads.')
+                    print('This mesomolecule was not considered during rebracketing.')
+
+            if not (xcoords == [] or ycoords == [] or zcoords == []):
+                displayrange = rebracket(each, xcoords, ycoords, zcoords)
+                for each in mesomoleculeset_list:
+                    each.set('DisplayRange',displayrange)
+            
             tree.write(f)
+
+        else:
+            error_files.append(f)
 
         progress += 1
         pProgress = float(progress)/len(mtd_list)
@@ -131,3 +153,52 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_li
                     print(' ** (...)' + each[common_path:])
                 print('\n ** Before applying styles, all files must have been opened at least once.')
                 print(' ** See the File Open Error section in Help for further information.\n')
+
+def getcoords(mesomoleculeset):
+    coords_list = mesomoleculeset.findall('./MesoMolecule')
+
+    xdim = int(mesomoleculeset.get('XSize'))
+    ydim = int(mesomoleculeset.get('YSize'))
+    zdim = int(mesomoleculeset.get('ZSize'))
+
+    x = []
+    y = []
+    z = []
+    for m in coords_list:
+        coords = m.get('Coords')
+        coords = coords.split(':')
+        for bead in coords:
+            xyz = bead.split(',')
+            x.append(float(xyz[0])/xdim)
+            y.append(float(xyz[1])/ydim)
+            z.append(float(xyz[2])/zdim)
+
+    return [x,y,z]
+
+def rebracket(mesomoleculeset, x, y, z):
+    x.sort()
+    y.sort()
+    z.sort()
+
+    divs = []
+    
+    for axis in x,y,z:
+        count = 0
+        mincount = 1000
+        prog = 0.01
+        i = 0
+        while i < len(axis) and not mincount == 0:
+            if axis[i] < prog:
+                count += 1
+            else:
+                if count < mincount:
+                    mincount = count
+                    minprog = prog
+                prog += 0.01
+                count = 0
+            i+=1
+        if minprog > 0.5:
+            minprog -= 1
+        divs.append(round(minprog,2))
+
+    return str(divs[0]) + ',' + str(divs[0]+1) + ',' + str(divs[1]) + ',' + str(divs[1]+1) + ',' + str(divs[2]) + ',' + str(divs[2]+1)
