@@ -1,3 +1,4 @@
+# -*- coding: cp1252 -*-
 from Tkinter import *
 from tkFileDialog import askdirectory
 from tkColorChooser import askcolor
@@ -44,6 +45,7 @@ def manage_species():
     if not species.get() == '':
         del species_elem_list[:]
         del vis_elem_list[:]
+        del solv_elem_list[:]
         del preset_elem_list[:]
         del rgb_elem_list[:]
         del hex_elem_list[:]
@@ -63,20 +65,22 @@ def manage_species():
         color_label = ttk.Label(specmgr, text='Species Color')
         color_label_sep = ttk.Separator(specmgr, orient='horizontal')
 
-        color_label.grid(column=2, row=0, columnspan=3)
-        color_label_sep.grid(column=2, row=1, columnspan=3, sticky=EW)
+        color_label.grid(column=3, row=0, columnspan=3)
+        color_label_sep.grid(column=3, row=1, columnspan=3, sticky=EW)
 
         name_label = ttk.Label(specmgr, text='Name')
         visibility_label = ttk.Label(specmgr, text='Visible')
+        solvent_label = ttk.Label(specmgr, text='Solvent')
         preset_label = ttk.Label(specmgr, text='Preset')
         rgb_label = ttk.Label(specmgr, text='RGB')
         preview_label = ttk.Label(specmgr, text='Preview')
 
         name_label.grid(column=0, row=2)
         visibility_label.grid(column=1, row=2)
-        preset_label.grid(column=2, row=2)
-        rgb_label.grid(column=3, row=2)
-        preview_label.grid(column=4, row=2)
+        solvent_label.grid(column=2, row=2)
+        preset_label.grid(column=3, row=2)
+        rgb_label.grid(column=4, row=2)
+        preview_label.grid(column=5, row=2)
         
         header_sep = ttk.Separator(specmgr, orient='horizontal')
         header_sep.grid(column=0, row=3, columnspan=6, ipady=2, sticky=EW)
@@ -86,6 +90,7 @@ def manage_species():
         for i in range(len(species_list)):
             species_elem_list.append(StringVar(value=species_list[i]))
             vis_elem_list.append(IntVar(value=1))
+            solv_elem_list.append(IntVar())
             preset_elem_list.append(StringVar(value='Default'))
             rgb_elem_list.append(StringVar(value='240,240,240'))
             hex_elem_list.append(StringVar(value='#f0f0f0'))
@@ -94,11 +99,13 @@ def manage_species():
             each = species_list[i]
             if each in species_dict:
                 vis = species_dict[each][0]
-                preset = species_dict[each][1]
-                rgb_val = species_dict[each][2]
-                hex_val = species_dict[each][3]
+                solv = species_dict[each][1]
+                preset = species_dict[each][2]
+                rgb_val = species_dict[each][3]
+                hex_val = species_dict[each][4]
                 
                 vis_elem_list[i].set(vis)
+                solv_elem_list[i].set(solv)
                 preset_elem_list[i].set(preset)
                 rgb_elem_list[i].set(rgb_val)
                 hex_elem_list[i].set(hex_val)
@@ -107,6 +114,7 @@ def manage_species():
 
             species_elem = ttk.Entry(specmgr, textvariable=species_elem_list[i], width=14, state='readonly')
             vis_elem = ttk.Checkbutton(specmgr, variable=vis_elem_list[i])
+            solv_elem = ttk.Checkbutton(specmgr, variable=solv_elem_list[i])
             preset_elem = ttk.Combobox(specmgr, textvariable=preset_elem_list[i], values=(
                                                                                             'White',
                                                                                             'Pink',
@@ -121,11 +129,12 @@ def manage_species():
                                                                                             ), width=9, state='readonly')
             preset_elem.bind('<<ComboboxSelected>>', preset_select)
             rgb_elem = ttk.Entry(specmgr, textvariable=rgb_elem_list[i], width=11, state='readonly')
-            preview_elem = ttk.Label(specmgr, width=14, borderwidth=1, relief='solid', style=style_list[i]) # Revisit later to get border width working
+            preview_elem = ttk.Label(specmgr, width=14, borderwidth=1, relief='solid', style=style_list[i])
             
             rows.append([
                 species_elem,
                 vis_elem,
+                solv_elem,
                 preset_elem,
                 rgb_elem,
                 preview_elem
@@ -134,9 +143,10 @@ def manage_species():
         for j in range(len(rows)):
             rows[j][0].grid(column=0, row=j+4, sticky=W)
             rows[j][1].grid(column=1, row=j+4)
-            rows[j][2].grid(column=2, row=j+4, sticky=W)
+            rows[j][2].grid(column=2, row=j+4)
             rows[j][3].grid(column=3, row=j+4, sticky=W)
-            rows[j][4].grid(column=4, row=j+4, sticky=NSEW)
+            rows[j][4].grid(column=4, row=j+4, sticky=W)
+            rows[j][5].grid(column=5, row=j+4, sticky=NSEW)
 
         for child in specmgr.winfo_children(): child.grid_configure(padx=4, pady=(0,2))
 
@@ -224,7 +234,26 @@ def close_specmgr(root_specmgr):
     species_dict.clear()
     customize_species.set('')
     for i in range(len(species_list)):
-        species_dict[species_elem_list[i].get()] = [vis_elem_list[i].get(), preset_elem_list[i].get(), rgb_elem_list[i].get(), hex_elem_list[i].get()]
+        species_dict[species_elem_list[i].get()] = [vis_elem_list[i].get(), solv_elem_list[i].get(), preset_elem_list[i].get(), rgb_elem_list[i].get(), hex_elem_list[i].get()]
+
+    solvcount = 0
+    for each in species_dict:
+        solvcount += species_dict[each][1]
+
+    if solvcount == 0:
+        tryrebracket_check.config(state='disabled')
+        tryrebracket.set(0)
+        print('No species are marked as solvents. Rebracketing is disabled.')
+
+    elif solvcount == len(species_dict):
+        tryrebracket_check.config(state='disabled')
+        tryrebracket.set(0)
+        print('All species are marked as solvents. Rebracketing is disabled.')
+
+    else:
+        tryrebracket_check.config(state='normal')
+        tryrebracket.set(1)
+
     root_specmgr.destroy()
 
 def get_box_color():
@@ -287,7 +316,7 @@ def apply_styles():
 
         ColorBARS_assemble.mtd_reader(
             [path.get(), species_dict],
-            [boxvis.get(), customboxcolor.get(), hidespecies.get(), boxcolorrgb.get()],
+            [boxvis.get(), customboxcolor.get(), hidespecies.get(), boxcolorrgb.get(), tryrebracket.get()],
             [ms_fieldcolormode, fielddispstyle.get(), dotqual_dict[dotqual.get()], dotsize.get(), volqual_dict[volqual.get()], transparency_dict[transparency.get()]],
             [showbeads.get(), showbonds.get(), mmoldispstyle.get(), dotsize2.get(), linewidth.get(), ballsize.get(), stickradius.get()],
             mtd_list
@@ -315,7 +344,35 @@ def program_help():
     print('Ask me if you have any other questions on the program usage.\n')
 
 def about_me():
-    print('Not written yet...check back later.\nI figured that you know about the program already, though.')
+    if 'About' not in pwindows:
+        root_about = Toplevel()
+        pwindows['About'] = root_about
+        root_about.focus_force()
+        root_about.title('About ColorBARS')
+        root_about.resizable(False,False)
+        root_about.protocol('WM_DELETE_WINDOW', lambda: close_passive('About'))
+        
+        about = ttk.Frame(root_about)
+        about.grid(column=0, row=0, pady=(1,0), sticky=NSEW)
+
+        about_label = ttk.Label(about, text=\
+    '''ColorBARS is a member of the BARS Suite, which was developed by Connor Callaway, Vivian Bond, and SeungMin Lee as a part of the CNBT Laboratory under Seung Soon Jang.
+
+The BARS Suite is a series of programs intended to offer extended functionality and/or quality-of-life improvements to various modules in Materials Studio (Accelrys/BIOVIA) and some in-house procedures as well. The suite was named in reference to the original program written for this project, the Blends Analysis/Refinement Script (BARS), and the associated script preparation utility, BARStool. From there, names were chosen almost entirely for the purpose of puns.
+
+ColorBARS offers rapid and automated processing of DPD results files (.mtd filetype) created through Materials Studio. This processing includes species-based field particle and mesomolecule coloration, species visibility controls, and DPD box rebracketing based on mesomolecule species density. For more information, see Help.
+
+We intend for users of this suite to find enhanced productivity through either deeper insights provided by programs in this suite or automation of monotonous tasks. Thank you for using the BARS Suite!''', wraplength=475)
+        about_label.grid(column=0, row=0)
+
+        for child in about.winfo_children(): child.grid_configure(padx=8, pady=(4,8))
+        
+    else:
+        pwindows['About'].focus_force()
+
+def close_passive(pw):
+    pwindows[pw].destroy()
+    del pwindows[pw]
 
 root_main = Tk()
 root_main.title('ColorBARS')
@@ -332,6 +389,7 @@ boxcolorrgb = StringVar(value='0,0,0')
 boxcolorhex = StringVar(value='#000000')
 style = ttk.Style()
 style.configure('Mine.TLabel', background=boxcolorhex.get())
+tryrebracket = IntVar()
 fieldcolormode = StringVar(value='fieldval')
 fielddispstyle = StringVar(value='Empty')
 dotqual = StringVar(value='Medium')
@@ -374,6 +432,7 @@ ballsize = StringVar(value='0.1')
 stickradius = StringVar(value='0.1')
 species_elem_list = []
 vis_elem_list = []
+solv_elem_list = []
 preset_elem_list = []
 rgb_elem_list = []
 hex_elem_list = []
@@ -421,6 +480,7 @@ hex_list = [
     '#FFFFFF',
     '#FFFF00'
 ]
+pwindows={}
 
 root_main.columnconfigure(0,weight=1)
 
@@ -462,8 +522,10 @@ chooseboxcolor_button = ttk.Button(boxsettings, text='Choose box color', command
 hidespecies_check = ttk.Checkbutton(boxsettings, text='Hide modified field species', variable=hidespecies, command=toggler2)
 boxrgb_label = ttk.Label(boxsettings, text='RGB:')
 boxrgb_entry = ttk.Entry(boxsettings, textvariable=boxcolorrgb, width=11, state='readonly')
-showcolor_label = ttk.Label(boxsettings, width=14, borderwidth=1, relief='solid', style='Mine.TLabel') # Revisit later to get border width working
+showcolor_label = ttk.Label(boxsettings, width=14, borderwidth=1, relief='solid', style='Mine.TLabel')
 notice2_label = ttk.Label(boxsettings, text='(Custom box color modifies some settings. For more information, click Help.)')
+tryrebracket_check = ttk.Checkbutton(boxsettings, text='Attempt box rebracketing', variable=tryrebracket)
+tryrebracket_check.config(state='disabled')
 
 box_label.grid(column=0, row=0, columnspan=2, sticky=W)
 boxvis_check.grid(column=0, row=1, sticky=W)
@@ -474,6 +536,7 @@ boxrgb_label.grid(column=2, row=2, sticky=E)
 boxrgb_entry.grid(column=3, row=2, sticky=W)
 showcolor_label.grid(column=4, row=2, sticky=NSEW)
 notice2_label.grid(column=0, row=3, columnspan=6, sticky=W)
+tryrebracket_check.grid(column=0, row=4, columnspan=2, sticky=W)
 
 for child in boxsettings.winfo_children(): child.grid_configure(padx=4, pady=(0,2))
 
