@@ -243,12 +243,12 @@ def close_specmgr(root_specmgr):
     if solvcount == 0:
         tryrebracket_check.config(state='disabled')
         tryrebracket.set(0)
-        print('No species are marked as solvents. Rebracketing is disabled.')
+        print('No species are marked as solvents. Rebracketing is disabled.\n')
 
     elif solvcount == len(species_dict):
         tryrebracket_check.config(state='disabled')
         tryrebracket.set(0)
-        print('All species are marked as solvents. Rebracketing is disabled.')
+        print('All species are marked as solvents. Rebracketing is disabled.\n')
 
     else:
         tryrebracket_check.config(state='normal')
