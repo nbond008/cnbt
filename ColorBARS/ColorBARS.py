@@ -1,10 +1,10 @@
-# -*- coding: cp1252 -*-
 from Tkinter import *
 from tkFileDialog import askdirectory
 from tkColorChooser import askcolor
 import ttk
 import ColorBARS_assemble
 from os.path import normpath
+from os import startfile
 
 def getdir():
     path_choice = normpath(askdirectory(initialdir=path.get()))
@@ -312,7 +312,7 @@ def apply_styles():
             else:
                 ms_fieldcolormode = '12289'
         else:
-            ms_fieldcolormode = 'species'
+            ms_fieldcolormode = '4096'
 
         ColorBARS_assemble.mtd_reader(
             [path.get(), species_dict],
@@ -333,42 +333,10 @@ def manage_defaults():
     pass
 
 def program_help():
-    print('Regarding the "Customize box color" option:')
-    print('Materials Studio is weird, so there\'s not actually a box color attribute in the .mtd file.')
-    print('The box color is controlled by the last visible species that does not have a ShowBox="0" attribute.')
-    print('Because of this, this option requires overriding the field settings of the last species in each .mtd file.')
-    print('That may or may not actually be the last species in the species list, by the way - it\'s complicated.')
-    print('Since the settings of the last species will be overridden, I\'ve included an option to hide that species.')
-    print('It\'s definitely weird, but I hope this clears things up in the short term before I find a better explanation.\n')
-    print('The rest of the Help menu isn\'t written yet.')
-    print('Ask me if you have any other questions on the program usage.\n')
+    startfile('ColorBARS_Help.pdf')
 
 def about_me():
-    if 'About' not in pwindows:
-        root_about = Toplevel()
-        pwindows['About'] = root_about
-        root_about.focus_force()
-        root_about.title('About ColorBARS')
-        root_about.resizable(False,False)
-        root_about.protocol('WM_DELETE_WINDOW', lambda: close_passive('About'))
-        
-        about = ttk.Frame(root_about)
-        about.grid(column=0, row=0, pady=(1,0), sticky=NSEW)
-
-        about_label = ttk.Label(about, text=\
-    '''ColorBARS is a member of the BARS Suite, which was developed by Connor Callaway, Vivian Bond, and SeungMin Lee as a part of the CNBT Laboratory under Seung Soon Jang.
-
-The BARS Suite is a series of programs intended to offer extended functionality and/or quality-of-life improvements to various modules in Materials Studio (Accelrys/BIOVIA) and some in-house procedures as well. The suite was named in reference to the original program written for this project, the Blends Analysis/Refinement Script (BARS), and the associated script preparation utility, BARStool. From there, names were chosen almost entirely for the purpose of puns.
-
-ColorBARS offers rapid and automated processing of DPD results files (.mtd filetype) created through Materials Studio. This processing includes species-based field particle and mesomolecule coloration, species visibility controls, and DPD box rebracketing based on mesomolecule species density. For more information, see Help.
-
-We intend for users of this suite to find enhanced productivity through either deeper insights provided by programs in this suite or automation of monotonous tasks. Thank you for using the BARS Suite!''', wraplength=475)
-        about_label.grid(column=0, row=0)
-
-        for child in about.winfo_children(): child.grid_configure(padx=8, pady=(4,8))
-        
-    else:
-        pwindows['About'].focus_force()
+    startfile('About_ColorBARS.pdf')
 
 def close_passive(pw):
     pwindows[pw].destroy()

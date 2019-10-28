@@ -69,8 +69,8 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_li
                     print('Species '+name[0]+' not found in species list. Some settings were not changed.')
             if boxsettings[1]:
                 each.set('Color', str(boxsettings[3] + fieldsettings[5]))
+                each.set('Visible','1')
                 if boxsettings[2]:
-                    each.set('Visible','1')
                     each.set('DisplayStyle', 'Empty')
 
             brokenbond_list = [[0]*100, [0]*100, [0]*100]
