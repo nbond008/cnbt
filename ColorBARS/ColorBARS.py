@@ -3,39 +3,58 @@ from tkFileDialog import askdirectory
 from tkColorChooser import askcolor
 import ttk
 import ColorBARS_assemble
-from os.path import normpath
+import ColorBARS_config
+from os.path import dirname, normpath, join
 from os import startfile
+from getpass import getuser
 
 def getdir():
-    path_choice = normpath(askdirectory(initialdir=path.get()))
-    if not (path_choice == '.' or path_choice == path.get()):
-        path.set(path_choice)
+    path_choice = normpath(askdirectory(initialdir=pathvar.get()))
+    if not (path_choice == '.' or path_choice == pathvar.get()):
+        pathvar.set(path_choice)
         detect_species()
 
 def detect_species():
     del species_list[:]
     del mtd_list[:]
-    plural = 's'
     species_dict.clear()
-    print('Detecting species and building .mtd list from '+path.get()+'...')
-    print('(Depending on your directory size, this may take a little while.)')
-    raw_species_list, raw_mtd_list = ColorBARS_assemble.species_finder(path.get())
+    plural = 's'
+
+    # Detect species <LANDMARK> <detect>
+    raw_species_list, raw_mtd_list = ColorBARS_assemble.species_finder(pathvar.get())
     for each in raw_species_list:
         species_list.append(each)
     for each in raw_mtd_list:
         mtd_list.append(each)
 
     if not species_list == [] and not mtd_list == []:
-        species_string = species_list[0]
-        for each in species_list[1:]:
-            species_string += ', '+each
+        solvcheck = 0
+        species_string = ''
+        for each in species_list:
+            species_string += each + ', '
+            if each in all_species_dict:
+                species_dict[each] = all_species_dict[each]
+                solvcheck += species_dict[each][1]
+
+        if len(species_dict) == len(species_list) and not (solvcheck == 0 or solvcheck == len(species_list)):
+            tryrebracket.set(boxsettings_defs[5])
+            tryrebracket_check.config(state='normal')
+            
+        else:
+            tryrebracket.set(0)
+            tryrebracket_check.config(state='disabled')
+        
+        species_string = species_string[:-2]
         species.set(species_string)
+        
         if len(mtd_list) == 1:
             plural = ''
         print('Species list complete with ' + str(len(mtd_list)) + ' .mtd file' + plural + ' found.\n')
+        
     elif species_list == []:
         print('No parameter (.Dpd_par) files found.\n')
         species.set('')
+        
     else:
         print('No results (.mtd) files found. Clicking the Apply Styles button will have no effect.')
         print('Species list cleared.\n')
@@ -181,7 +200,7 @@ def manage_species():
 
         for child in specmgropts.winfo_children(): child.grid_configure(padx=4, pady=(1,2))
     
-    elif path.get() == '':
+    elif pathvar.get() == '':
         print('Select a directory first.\n')
 
     else:
@@ -252,7 +271,7 @@ def close_specmgr(root_specmgr):
 
     else:
         tryrebracket_check.config(state='normal')
-        tryrebracket.set(1)
+        tryrebracket.set(boxsettings_defs[5])
 
     root_specmgr.destroy()
 
@@ -303,9 +322,8 @@ def toggler2():
         boxvis.set(1)
 
 def apply_styles():
-    if not species_dict == {}:
-
-        # Settings list builder <LANDMARK> <builder>
+    # Apply styles <LANDMARK> <styles>
+    if len(species_dict) == len(species_list) and not species_dict == {}:
         if fieldcolormode.get() == 'fieldval':
             if fielddispstyle.get() == 'Volume':
                 ms_fieldcolormode = '4097'
@@ -315,7 +333,7 @@ def apply_styles():
             ms_fieldcolormode = '4096'
 
         ColorBARS_assemble.mtd_reader(
-            [path.get(), species_dict],
+            [pathvar.get(), species_dict],
             [boxvis.get(), customboxcolor.get(), hidespecies.get(), boxcolorrgb.get(), tryrebracket.get()],
             [ms_fieldcolormode, fielddispstyle.get(), dotqual_dict[dotqual.get()], dotsize.get(), volqual_dict[volqual.get()], transparency_dict[transparency.get()]],
             [showbeads.get(), showbonds.get(), mmoldispstyle.get(), dotsize2.get(), linewidth.get(), ballsize.get(), stickradius.get()],
@@ -328,39 +346,99 @@ def apply_styles():
         print('All fields are required.')
         print('Make sure that the species list has been built by opening the species manager.\n')
 
-def manage_defaults():
-    print('This wasn\'t high enough of a priority to do yet.\nCheck back later.\n')
-    pass
+def save_defaults():
+    # Save new defaults <LANDMARK> <savedefs>
+    save_tryrebracket = 1
+    if tryrebracket_check.instate(('disabled',)):
+        save_tryrebracket = 0
+
+    ColorBARS_config.save(
+            username,
+            config_file,
+            species_dict,
+            [boxvis.get(), customboxcolor.get(), hidespecies.get(), boxcolorrgb.get(), boxcolorhex.get(), save_tryrebracket, tryrebracket.get()],
+            [fieldcolormode.get(), fielddispstyle.get(), dotqual.get(), dotsize.get(), volqual.get(), transparency.get()],
+            [showbeads.get(), showbonds.get(), mmoldispstyle.get(), dotsize2.get(), linewidth.get(), ballsize.get(), stickradius.get()]
+        )
+    
+    print('Defaults saved.\n')
+
+    load_defaults(False)
+
+def load_defaults(showmsg=True):
+    all_species_dict.clear()
+    del boxsettings_defs[:]
+    del fieldsettings_defs[:]
+    del mmolsettings_defs[:]
+
+    # Load defaults <LANDMARK> <savedefs>
+    raw_defaults = ColorBARS_config.load(username, config_file)
+    
+    for each in raw_defaults[0]:
+        all_species_dict[each] = raw_defaults[0][each]
+    for each in raw_defaults[1]:
+        boxsettings_defs.append(each)
+    for each in raw_defaults[2]:
+        fieldsettings_defs.append(each)
+    for each in raw_defaults[3]:
+        mmolsettings_defs.append(each)
+
+    boxvis.set(boxsettings_defs[0])
+    customboxcolor.set(boxsettings_defs[1])
+    hidespecies.set(boxsettings_defs[2])
+    boxcolorrgb.set(boxsettings_defs[3])
+    boxcolorhex.set(boxsettings_defs[4])
+    style.configure('Mine.TLabel', background=boxcolorhex.get())
+
+    fieldcolormode.set(fieldsettings_defs[0])
+    fielddispstyle.set(fieldsettings_defs[1])
+    dotqual.set(fieldsettings_defs[2])
+    dotsize.set(fieldsettings_defs[3])
+    volqual.set(fieldsettings_defs[4])
+    transparency.set(fieldsettings_defs[5])
+
+    showbeads.set(mmolsettings_defs[0])
+    showbonds.set(mmolsettings_defs[1])
+    mmoldispstyle.set(mmolsettings_defs[2])
+    dotsize2.set(mmolsettings_defs[3])
+    linewidth.set(mmolsettings_defs[4])
+    ballsize.set(mmolsettings_defs[5])
+    stickradius.set(mmolsettings_defs[6])
+
+    if showmsg:
+        print('Loaded defaults.\n')
 
 def program_help():
     startfile('ColorBARS_Help.pdf')
 
 def about_me():
-    startfile('About_ColorBARS.pdf')
+    startfile('About_ColorBARS.pdf')    
 
-def close_passive(pw):
-    pwindows[pw].destroy()
-    del pwindows[pw]
+username = getuser()
+config_file = join(dirname(normpath(__file__)),'ColorBARS_config.xml')
+all_species_dict = {}
+boxsettings_defs = []
+fieldsettings_defs = []
+mmolsettings_defs = []
 
 root_main = Tk()
 root_main.title('ColorBARS')
 
-path = StringVar()
+pathvar = StringVar()
 species = StringVar()
 species_list = []
 species_dict = {}
 mtd_list = []
-boxvis = IntVar(value=1)
+boxvis = IntVar()
 customboxcolor = IntVar()
 hidespecies = IntVar()
-boxcolorrgb = StringVar(value='0,0,0')
-boxcolorhex = StringVar(value='#000000')
+boxcolorrgb = StringVar()
+boxcolorhex = StringVar()
 style = ttk.Style()
-style.configure('Mine.TLabel', background=boxcolorhex.get())
 tryrebracket = IntVar()
-fieldcolormode = StringVar(value='fieldval')
-fielddispstyle = StringVar(value='Empty')
-dotqual = StringVar(value='Medium')
+fieldcolormode = StringVar()
+fielddispstyle = StringVar()
+dotqual = StringVar()
 
 dotqual_dict = {
     'Lowest':   '1',
@@ -370,8 +448,8 @@ dotqual_dict = {
     'Highest':  '8'
 }
 
-dotsize = StringVar(value='3')
-volqual = StringVar(value='Medium')
+dotsize = StringVar()
+volqual = StringVar()
 
 volqual_dict = {
     'Lowest':   '25',
@@ -381,7 +459,7 @@ volqual_dict = {
     'Highest':  '400'
 }
 
-transparency = StringVar(value='25%')
+transparency = StringVar()
 
 transparency_dict = {
     '0%':   ',255',
@@ -391,13 +469,13 @@ transparency_dict = {
     '100%': ',0'
 }
 
-showbeads = IntVar(value=1)
-showbonds = IntVar(value=1)
-mmoldispstyle = StringVar(value='Dot and Line')
-dotsize2 = StringVar(value='3')
-linewidth = StringVar(value='3')
-ballsize = StringVar(value='0.1')
-stickradius = StringVar(value='0.1')
+showbeads = IntVar()
+showbonds = IntVar()
+mmoldispstyle = StringVar()
+dotsize2 = StringVar()
+linewidth = StringVar()
+ballsize = StringVar()
+stickradius = StringVar()
 species_elem_list = []
 vis_elem_list = []
 solv_elem_list = []
@@ -448,7 +526,8 @@ hex_list = [
     '#FFFFFF',
     '#FFFF00'
 ]
-pwindows={}
+
+load_defaults()
 
 root_main.columnconfigure(0,weight=1)
 
@@ -458,7 +537,7 @@ generalsettings.grid(column=0, row=0, sticky=NSEW)
 
 path_label = ttk.Label(generalsettings, text='Parent directory:')
 path_button = ttk.Button(generalsettings, text='Open', width=8, command=getdir)
-path_entry = ttk.Entry(generalsettings, textvariable=path, state='readonly')
+path_entry = ttk.Entry(generalsettings, textvariable=pathvar, state='readonly')
 notice1_label = ttk.Label(generalsettings, text='(Should be the folder containing all associated DPD files.)')
 species_label = ttk.Label(generalsettings, text='Species:')
 species_button = ttk.Button(generalsettings, text='Manage', width=8, command=manage_species)
@@ -608,16 +687,18 @@ endoptions = ttk.Frame(root_main, padding='4 2 4 4')
 endoptions.grid(column=0, row=8, sticky=NSEW)
 
 apply_button = ttk.Button(endoptions, text='Apply styles', width=11, command=apply_styles)
-config_button = ttk.Button(endoptions, text='Save defaults', width=12, command=manage_defaults)
+save_def_button = ttk.Button(endoptions, text='Save defaults', width=12, command=save_defaults)
+load_def_button = ttk.Button(endoptions, text='Load defaults', width=12, command=load_defaults)
 help_button = ttk.Button(endoptions, text='Help', width=5, command=program_help)
 about_button = ttk.Button(endoptions, text='About', width=6, command=about_me)
 quit_button = ttk.Button(endoptions, text='Quit', width=5, command=root_main.destroy)
 
 apply_button.grid(column=0, row=0)
-config_button.grid(column=1, row=0)
-help_button.grid(column=2, row=0)
-about_button.grid(column=3, row=0)
-quit_button.grid(column=4, row=0)
+save_def_button.grid(column=1, row=0)
+load_def_button.grid(column=2, row=0)
+help_button.grid(column=3, row=0)
+about_button.grid(column=4, row=0)
+quit_button.grid(column=5, row=0)
 
 for child in endoptions.winfo_children(): child.grid_configure(padx=4, pady=(3,2))
 

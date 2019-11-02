@@ -2,9 +2,12 @@ from os import walk
 from os.path import join
 from time import time
 from math import ceil
-import xml.etree.cElementTree as ET
+import xml.etree.cElementTree as ET # cElementTree deprecated in 3.3 - use xml.etree.ElementTree in 3.3 or later if equivalent speed
 
 def species_finder(directory):
+    print('Detecting species and building .mtd list from '+directory+'...')
+    print('(Depending on your directory size, this may take a little while.)')
+    
     species = []
     mtd_list = []
     for path, subs, files in walk(directory):
@@ -42,6 +45,7 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_li
     decade = 0
     t0 = time()
     error_files = []
+    error_files2 = []
     for f in mtd_list:
         print('   Modifying (...)'+f[common_path:]+'...')
         tree = ET.parse(f)
@@ -49,6 +53,7 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_li
         floatfield_list = tree.findall('./MesoTreeRoot/FloatField')
         mesomoleculeset_list = tree.findall('./MesoTreeRoot/MesoMoleculeSet')
 
+        missing_species = []
         if not (floatfield_list == [] or mesomoleculeset_list == []):
             for each in floatfield_list:
                 rawname = each.get('Name')
@@ -65,11 +70,13 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_li
                     each.set('VolumeQuality', str(fieldsettings[4]))
                     each.set('Color', str(species[name[0]][3] + fieldsettings[5]))
                     each.set('Visible', str(species[name[0]][0]))
-                else:
-                    print('Species '+name[0]+' not found in species list. Some settings were not changed.')
+                elif not (name[0] in species or name[0] in missing_species):
+                    missing_species.append(name[0])
+                    
+            if boxsettings[0]:
+                each.set('Visible','1')
             if boxsettings[1]:
                 each.set('Color', str(boxsettings[3] + fieldsettings[5]))
-                each.set('Visible','1')
                 if boxsettings[2]:
                     each.set('DisplayStyle', 'Empty')
 
@@ -94,23 +101,29 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_li
                         eachtype.set('Color', str(species[name][3] + ',255'))
                         eachtype.set('Visible', str(species[name][0]))
                         solvcheck += species[name][1]
-                    else:
-                        print('Species '+name+' not found in species list. Some settings were not changed.')
+                    elif not (name in species or name in missing_species):
+                        missing_species.append(name)
 
                 if boxsettings[4] and solvcheck == 0:
                     coords_analyzer(each, brokenbond_list)
                 
                 elif boxsettings[4] and not solvcheck == int(each.get('NumberBeadTypes')):
-                    print('Mesomolecule '+each.get('Name')+' has mixed solvent and non-solvent beads.')
-                    print('This mesomolecule was not considered during rebracketing.')
+                    print('      Mesomolecule '+each.get('Name')+' has mixed solvent and non-solvent beads.')
+                    print('      This mesomolecule was not considered during rebracketing.')
 
             if boxsettings[4]:
                 displayrange = rebracket(brokenbond_list)
                 for each in mesomoleculeset_list:
                     each.set('DisplayRange',displayrange)
-
+            
             tree.write(f)
-
+        
+            if not missing_species == []:
+                missing_species_string = missing_species[0]
+                for name in missing_species[1:]:
+                    missing_species_string += ', ' + name
+                error_files2.append([f, missing_species_string])
+        
         else:
             error_files.append(f)
 
@@ -137,6 +150,7 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_li
     else:
         tens = ''
     print('\n--- All files completed. Time elapsed: ' + str(minutes) + ':' + tens + str(seconds) + ' ---\n')
+    
     if not error_files == []:
         if len(error_files)>1:
             plural2 = 's were'
@@ -146,7 +160,17 @@ def mtd_reader(generalsettings, boxsettings, fieldsettings, mmolsettings, mtd_li
         for each in error_files:
             print(' ** (...)' + each[common_path:])
         print('\n ** Before applying styles, all .mtd files must have been opened at least once.')
-        print(' ** See the File Open Error section in Help for further information.\n')
+        print(' ** Click Help for further information.\n')
+
+    if not error_files2 == []:
+        if len(error_files2)>1:
+            plural3 = 's'
+        else:
+            plural3 = ''
+        print(' ** Warning: The following file' + plural3 + ' contained missing bead types.')
+        for each in error_files2:
+            print(' ** (...)' + each[0][common_path:] + '     (Missing species: ' + each[1] + ')')
+        print('\n ** Each bead type must be present in the species list in order to be modified.\n')
 
 def coords_analyzer(mesomoleculeset, brokenbond_list):
     mesomolecule_list = mesomoleculeset.findall('./MesoMolecule')
