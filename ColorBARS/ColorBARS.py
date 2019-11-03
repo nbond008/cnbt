@@ -28,25 +28,7 @@ def detect_species():
         mtd_list.append(each)
 
     if not species_list == [] and not mtd_list == []:
-        solvcheck = 0
-        species_string = ''
-        for each in species_list:
-            species_string += each + ', '
-            if each in all_species_dict:
-                species_dict[each] = all_species_dict[each]
-                solvcheck += species_dict[each][1]
-
-        if len(species_dict) == len(species_list) and not (solvcheck == 0 or solvcheck == len(species_list)):
-            tryrebracket.set(boxsettings_defs[5])
-            tryrebracket_check.config(state='normal')
-            
-        else:
-            tryrebracket.set(0)
-            tryrebracket_check.config(state='disabled')
-        
-        species_string = species_string[:-2]
-        species.set(species_string)
-        
+        build_species_dict()
         if len(mtd_list) == 1:
             plural = ''
         print('Species list complete with ' + str(len(mtd_list)) + ' .mtd file' + plural + ' found.\n')
@@ -59,6 +41,27 @@ def detect_species():
         print('No results (.mtd) files found. Clicking the Apply Styles button will have no effect.')
         print('Species list cleared.\n')
         species.set('')
+
+def build_species_dict():
+    solvcheck = 0
+    species_string = ''
+
+    for each in species_list:
+        species_string += each + ', '
+        if each in all_species_dict:
+            species_dict[each] = all_species_dict[each]
+            solvcheck += species_dict[each][1]
+
+    if len(species_dict) == len(species_list) and not (solvcheck == 0 or solvcheck == len(species_list)):
+        tryrebracket.set(boxsettings_defs[5])
+        tryrebracket_check.config(state='normal')
+        
+    else:
+        tryrebracket.set(0)
+        tryrebracket_check.config(state='disabled')
+
+    species_string = species_string[:-2]
+    species.set(species_string)
 
 def manage_species():
     if not species.get() == '':
@@ -405,6 +408,8 @@ def load_defaults(showmsg=True):
     ballsize.set(mmolsettings_defs[5])
     stickradius.set(mmolsettings_defs[6])
 
+    build_species_dict()
+
     if showmsg:
         print('Loaded defaults.\n')
 
@@ -526,8 +531,6 @@ hex_list = [
     '#FFFFFF',
     '#FFFF00'
 ]
-
-load_defaults()
 
 root_main.columnconfigure(0,weight=1)
 
@@ -709,4 +712,5 @@ root_main.update()
 root_main.minsize(root_main.winfo_width(), root_main.winfo_height())
 root_main.maxsize(3*root_main.winfo_width(), root_main.winfo_height())
 
+load_defaults()
 root_main.mainloop()
